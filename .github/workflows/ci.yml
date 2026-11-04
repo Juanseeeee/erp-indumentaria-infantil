@@ -1,0 +1,35 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: erp
+          POSTGRES_PASSWORD: erp
+          POSTGRES_DB: erp_test
+        ports: ["5433:5432"]
+        options: --health-cmd "pg_isready -U erp" --health-interval 5s --health-retries 10
+    env:
+      DATABASE_URL_TEST: postgresql://erp_app:erp_app@localhost:5433/erp_test?schema=public
+      DATABASE_MIGRATION_URL_TEST: postgresql://erp:erp@localhost:5433/erp_test?schema=public
+      DATABASE_URL: postgresql://erp_app:erp_app@localhost:5433/erp_test?schema=public
+      DATABASE_MIGRATION_URL: postgresql://erp:erp@localhost:5433/erp_test?schema=public
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter "./packages/*" build
+      - run: pnpm --filter @erp/api prisma:generate
+      - run: pnpm --filter "./packages/domain-*" test
+      - run: pnpm --filter @erp/api typecheck
+      - run: touch apps/api/.env && pnpm --filter @erp/api test
+      - run: pnpm --filter @erp/web build

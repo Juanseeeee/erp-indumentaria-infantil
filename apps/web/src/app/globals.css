@@ -1,0 +1,126 @@
+@import 'tailwindcss';
+
+/* Tokens de diseño: neutros cálidos + acento verde petróleo. Contraste AA en ambos temas. */
+:root {
+  --bg: #f7f6f3;
+  --surface: #ffffff;
+  --surface-2: #f1efea;
+  --border: #e3e0d8;
+  --text: #1f1d1a;
+  --text-muted: #6b665c;
+  --accent: #2f6f6a;
+  --accent-hover: #255854;
+  --accent-soft: #e2efed;
+  --accent-text: #ffffff;
+  --danger: #b42318;
+  --danger-soft: #fdecea;
+  --warning: #9a5b00;
+  --warning-soft: #fff4e0;
+  --success: #1e7a43;
+  --success-soft: #e6f4ea;
+  --focus: #2f6f6a;
+  /* Series de gráficos (validadas contra la superficie: CVD, contraste ≥ 3:1). */
+  --viz-in: #2a78d6;
+  --viz-out: #eb6834;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg: #161514;
+    --surface: #1e1d1b;
+    --surface-2: #262522;
+    --border: #36342f;
+    --text: #ecebe7;
+    --text-muted: #a29d92;
+    --accent: #5fb3ab;
+    --accent-hover: #74c4bc;
+    --accent-soft: #1f3533;
+    --accent-text: #0d1716;
+    --danger: #f28b82;
+    --danger-soft: #3a1d1a;
+    --warning: #f0b45a;
+    --warning-soft: #3a2a12;
+    --success: #7bcf98;
+    --success-soft: #1a3324;
+    --focus: #5fb3ab;
+    --viz-in: #3987e5;
+    --viz-out: #d95926;
+  }
+}
+
+:root[data-theme='dark'] {
+  --bg: #161514;
+  --surface: #1e1d1b;
+  --surface-2: #262522;
+  --border: #36342f;
+  --text: #ecebe7;
+  --text-muted: #a29d92;
+  --accent: #5fb3ab;
+  --accent-hover: #74c4bc;
+  --accent-soft: #1f3533;
+  --accent-text: #0d1716;
+  --danger: #f28b82;
+  --danger-soft: #3a1d1a;
+  --warning: #f0b45a;
+  --warning-soft: #3a2a12;
+  --success: #7bcf98;
+  --success-soft: #1a3324;
+  --focus: #5fb3ab;
+  --viz-in: #3987e5;
+  --viz-out: #d95926;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-border: var(--border);
+  --color-text: var(--text);
+  --color-muted: var(--text-muted);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-text: var(--accent-text);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+html,
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.num {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Impresión de comprobantes (remito, factura, recibo, estado de cuenta): solo el documento. */
+@media print {
+  aside,
+  header,
+  .print-hide {
+    display: none !important;
+  }
+  html,
+  body {
+    background: #fff !important;
+    color: #000 !important;
+  }
+  main {
+    max-width: none !important;
+    padding: 0 !important;
+  }
+}

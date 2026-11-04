@@ -1,0 +1,14 @@
+node_modules
+dist
+.next
+.turbo
+coverage
+.env
+.env.*
+!.env.example
+*.log
+playwright-report
+test-results
+api.log
+web.log
+e2e/test-results
