@@ -366,3 +366,100 @@ describe('casos borde de producción', () => {
     await operario.post(`/production/orders/${o}/release`).expect(403);
   });
 });
+
+describe('Producción en planta sin entregar materiales y compra que llega después', () => {
+  const ent = { product: '', variant: '' };
+  it('consume según la ficha al ingresar, deja pendiente lo que falta y no cierra hasta registrarlo', async () => {
+    const verde = await createMaterial(admin, t, 'TELA-VERDE');
+    const boton = (await admin.post('/materials', { sku: 'BOTON', name: 'Botón', baseUomId: t.uomUn }).expect(201)).body.itemId as string;
+    const product = (
+      await admin.post('/catalog/products', { code: 'ENT', name: 'Enterito', sizeScaleId: t.sizeScaleId, colorIds: [BLANCO()], status: 'ACTIVE' }).expect(201)
+    ).body.id as string;
+    const cells = (await admin.get(`/catalog/products/${product}/matrix`).expect(200)).body.cells as { itemId: string; sizeId: string }[];
+    const v = cells.find((c) => c.sizeId === t.sizeIds[0])!.itemId;
+    Object.assign(ent, { product, variant: v });
+    await admin
+      .put(`/production/tech-sheets/${product}/draft`, { stageIds: [ids.stages.CORTE!], materials: [{ materialItemId: verde, qtyPerUnit: '1' }, { materialItemId: boton, qtyPerUnit: '2' }] })
+      .expect(200);
+    await admin.post(`/production/tech-sheets/${product}/activate`).expect(201);
+    // Botones en stock (recepción sin OC); tela verde todavía no.
+    await admin.post('/purchasing/receipts', { supplierId: ids.supplier, warehouseId: t.whA, lines: [{ itemId: boton, qty: '20', unitCost: '10' }] }).expect(201);
+
+    const op = (
+      await admin.post('/production/orders', { productId: product, materialsWarehouseId: t.whA, outputWarehouseId: t.whB, lines: [{ variantItemId: v, qty: '10' }] }).expect(201)
+    ).body.id as string;
+    const rel = await admin.post(`/production/orders/${op}/release`).expect(201);
+    expect(rel.body.shortages.map((s: { materialItemId: string }) => s.materialItemId)).toEqual([verde]);
+
+    // Se ingresan las 10 prendas sin haber entregado materiales: los botones se consumen solos; la tela queda pendiente.
+    const out = await admin.post(`/production/orders/${op}/output`, { lines: [{ variantItemId: v, approvedQty: '10' }] }).expect(201);
+    expect(out.body.pendingConsumption).toEqual([expect.objectContaining({ materialItemId: verde, qty: '10' })]);
+    expect(out.body.warnings.join(' ')).toContain('TELA-VERDE');
+    expect((await stockOf(boton, t.whA)).onHand).toBe('0');
+    expect((await stockOf(v, t.whB)).onHand).toBe('10');
+    let detail = (await admin.get(`/production/orders/${op}`).expect(200)).body;
+    expect(detail.status).toBe('COMPLETED');
+    expect(detail.pendingConsumption).toEqual([expect.objectContaining({ sku: 'TELA-VERDE', qty: '10' })]);
+
+    // No se puede cerrar sin registrar el consumo (ni consumir sin stock).
+    const close = await admin.post(`/production/orders/${op}/close`, {});
+    expect(close.status).toBe(422);
+    expect(close.body.message).toContain('Consumir según ficha');
+    expect((await admin.post(`/production/orders/${op}/consume-by-sheet`)).status).toBe(409);
+
+    // Llega la compra: se pidieron 12 m, el proveedor entrega 10 y no va a mandar el resto.
+    const po = await admin
+      .post('/purchasing/orders', { supplierId: ids.supplier, warehouseId: t.whA, lines: [{ itemId: verde, qty: '12', unitPrice: '3000', vatRate: '21' }] })
+      .expect(201);
+    await admin
+      .post('/purchasing/receipts', {
+        supplierId: ids.supplier, warehouseId: t.whA, purchaseOrderId: po.body.id, closePending: true,
+        lines: [{ poLineId: po.body.lines[0].id, itemId: verde, qty: '10' }],
+      })
+      .expect(201);
+    expect((await owner.purchaseOrder.findUniqueOrThrow({ where: { id: po.body.id } })).status).toBe('CLOSED');
+    const closedLog = await owner.auditLog.findFirst({ where: { companyId: t.companyId, entity: 'purchase_order', entityId: po.body.id, action: 'close' } });
+    expect(closedLog?.reason).toContain('no entrega el resto');
+
+    detail = (await admin.post(`/production/orders/${op}/consume-by-sheet`).expect(201)).body;
+    expect(detail.pendingConsumption).toEqual([]);
+    expect((await stockOf(verde, t.whA)).onHand).toBe('0');
+    const closed = await admin.post(`/production/orders/${op}/close`, {}).expect(201);
+    // Materiales: 10 m × 3000 + 20 botones × 10.
+    expect(closed.body.cost.materials).toBe('30200');
+  });
+
+  it('cerrar sin registrar todo el consumo exige el motivo y queda auditado', async () => {
+    // El enterito ya no tiene tela ni botones en stock: el ingreso deja todo pendiente.
+    const op = (
+      await admin.post('/production/orders', { productId: ent.product, materialsWarehouseId: t.whA, outputWarehouseId: t.whB, lines: [{ variantItemId: ent.variant, qty: '1' }] }).expect(201)
+    ).body.id as string;
+    await admin.post(`/production/orders/${op}/release`).expect(201);
+    const out = await admin.post(`/production/orders/${op}/output`, { lines: [{ variantItemId: ent.variant, approvedQty: '1' }] }).expect(201);
+    expect(out.body.pendingConsumption).toHaveLength(2);
+    expect((await admin.post(`/production/orders/${op}/close`, { acceptPendingConsumption: true })).status).toBe(422);
+    await admin.post(`/production/orders/${op}/close`, { acceptPendingConsumption: true, reason: 'Se cortó con retazos de otra orden' }).expect(201);
+    const log = await owner.auditLog.findFirst({ where: { companyId: t.companyId, entity: 'production_order', entityId: op, action: 'close' } });
+    expect(log?.reason).toBe('Se cortó con retazos de otra orden');
+  });
+});
+
+describe('Compras: comprobantes y filtros', () => {
+  it('sugiere punto de venta y próximo número; los puntos de venta se configuran', async () => {
+    let d = (await admin.get(`/purchasing/invoices/defaults?supplierId=${ids.supplier}&docType=FA`).expect(200)).body;
+    expect(d).toEqual({ pointsOfSale: [1], pointOfSale: 1, nextNumber: null });
+    d = (await admin.get(`/purchasing/invoices/defaults?supplierId=${ids.supplier}&docType=FA&pointOfSale=3`).expect(200)).body;
+    expect(d.nextNumber).toBe(4522);
+    await admin.put('/settings/purchasing-points-of-sale', { pointsOfSale: [3, 1] }).expect(200);
+    d = (await admin.get(`/purchasing/invoices/defaults?supplierId=${ids.supplier}&docType=FA`).expect(200)).body;
+    expect(d).toEqual({ pointsOfSale: [3, 1], pointOfSale: 3, nextNumber: 4522 });
+    expect((await admin.put('/settings/purchasing-points-of-sale', { pointsOfSale: [] })).status).toBe(400);
+  });
+
+  it('los filtros sí/no de la query respetan «false»', async () => {
+    const all = (await admin.get('/inventory/stock?kind=MATERIAL&onlyCritical=false&pageSize=200').expect(200)).body;
+    const critical = (await admin.get('/inventory/stock?kind=MATERIAL&onlyCritical=true&pageSize=200').expect(200)).body;
+    expect(all.total).toBeGreaterThan(critical.total);
+    expect(all.rows.some((r: { sku: string }) => r.sku === 'BOTON')).toBe(true);
+  });
+});

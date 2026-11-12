@@ -12,3 +12,5 @@ test-results
 api.log
 web.log
 e2e/test-results
+.vercel
+video-demo-erp/

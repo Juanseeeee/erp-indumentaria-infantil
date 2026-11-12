@@ -109,6 +109,65 @@ export class ProductionService {
     return map;
   }
 
+  /**
+   * Consumo de materiales que todavía falta registrar según la ficha, por las prendas ya ingresadas
+   * (aprobadas, segunda y descarte): teórico − consumido − lo que está en poder de talleres.
+   */
+  private async consumptionGap(tx: Tx, o: Order) {
+    if (!o.techSheetVersionId) return [];
+    const lines = await tx.productionOrderLine.findMany({ where: { orderId: o.id } });
+    const produced = lines
+      .map((l) => ({ variantItemId: l.variantItemId, qty: dec(l.goodQty.toString()).plus(l.secondQty.toString()).plus(l.scrapQty.toString()) }))
+      .filter((l) => l.qty.gt(0));
+    if (!produced.length) return [];
+    const colors = await tx.color.findMany({ select: { id: true, name: true } });
+    const theo = explodeBom(await this.bom(tx, o.techSheetVersionId), await this.garments(tx, produced), Object.fromEntries(colors.map((c) => [c.id, c.name])));
+    const units = await this.unitItemIds(tx, [...theo.keys()]);
+    const reqs = await tx.productionRequirement.findMany({ where: { orderId: o.id } });
+    const gaps: { materialItemId: string; qty: Dec }[] = [];
+    for (const [materialItemId, raw] of theo) {
+      const need = units.has(materialItemId) ? raw.ceil() : raw;
+      const r = reqs.find((x) => x.materialItemId === materialItemId);
+      const covered = r ? dec(r.consumedQty.toString()).plus(r.atWorkshopQty.toString()) : dec(0);
+      const gap = roundQty(need.minus(covered));
+      if (gap.gt(0)) gaps.push({ materialItemId, qty: gap });
+    }
+    return gaps;
+  }
+
+  /**
+   * Registra el consumo pendiente según la ficha desde el depósito de materiales.
+   * `partial`: consume lo que haya (libre + reservado para la orden) y devuelve lo que no se pudo.
+   * Sin `partial` falla si falta stock (mensaje de stock insuficiente).
+   */
+  private async consumeGap(tx: Tx, ctx: RequestContext, o: Order, reason: string, partial: boolean) {
+    const gaps = await this.consumptionGap(tx, o);
+    await this.stock.prelock(tx, ctx.companyId, gaps.map((g) => ({ itemId: g.materialItemId, warehouseId: o.materialsWarehouseId })));
+    const missing: { materialItemId: string; sku?: string; qty: string }[] = [];
+    for (const g of gaps) {
+      const r = await this.requirement(tx, ctx, o, g.materialItemId);
+      const own = await this.stock.reservationPending(tx, r.reservationId);
+      const free = await this.stock.available(tx, g.materialItemId, o.materialsWarehouseId);
+      const avail = own.plus(free.gt(0) ? free : dec(0));
+      const take = partial && avail.lt(g.qty) ? avail : g.qty;
+      if (take.gt(0)) {
+        await this.stock.moveOutFifo(tx, ctx, {
+          itemId: g.materialItemId, warehouseId: o.materialsWarehouseId, type: 'PROD_ISSUE', qty: take.toString(),
+          sourceDocType: SRC, sourceDocId: o.id, sourceLineId: r.id, reservationId: r.reservationId, reason,
+        });
+        await tx.productionRequirement.update({ where: { id: r.id }, data: { issuedQty: { increment: take.toString() }, consumedQty: { increment: take.toString() } } });
+        r.issuedQty = new Prisma.Decimal(dec(r.issuedQty.toString()).plus(take).toString());
+        r.consumedQty = new Prisma.Decimal(dec(r.consumedQty.toString()).plus(take).toString());
+      }
+      if (take.lt(g.qty)) missing.push({ materialItemId: g.materialItemId, qty: g.qty.minus(take).toString() });
+    }
+    if (missing.length) {
+      const items = await tx.item.findMany({ where: { id: { in: missing.map((m) => m.materialItemId) } }, select: { id: true, sku: true } });
+      for (const m of missing) m.sku = items.find((i) => i.id === m.materialItemId)?.sku;
+    }
+    return { consumed: gaps.length - missing.length, missing };
+  }
+
   // ─── Alta ───
 
   create(ctx: RequestContext, input: ProductionOrderCreateInput) {
@@ -571,12 +630,22 @@ export class ProductionService {
           const done = lines.every((x) => dec(x.receivedQty.toString()).gte(x.qty.toString()));
           await tx.workshopDispatch.update({ where: { id: dispatch.id }, data: { status: done ? 'RECEIVED' : 'PARTIALLY_RECEIVED' } });
         }
+        // Producción propia: lo que la planta no retiró explícitamente se consume según la ficha.
+        // Si falta material (p. ej. la compra todavía no se recibió) queda pendiente y se avisa.
+        let pendingConsumption: { materialItemId: string; sku?: string; qty: string }[] = [];
+        if (!dispatch) {
+          const res = await this.consumeGap(tx, ctx, o, `Consumo según ficha ${number}`, true);
+          pendingConsumption = res.missing;
+          for (const m of res.missing) {
+            warnings.push(`${m.sku}: faltan ${m.qty} en el depósito de materiales; el consumo queda pendiente. Cuando lo recibas, usá «Consumir según ficha».`);
+          }
+        }
         // Si se ingresó todo lo planificado, la orden queda terminada (lista para cerrar).
         const after = await tx.productionOrderLine.findMany({ where: { orderId: id } });
         const complete = after.every((x) => dec(x.goodQty.toString()).plus(x.secondQty.toString()).plus(x.scrapQty.toString()).gte(x.plannedQty.toString()));
         await tx.productionOrder.update({ where: { id }, data: { status: complete ? 'COMPLETED' : 'IN_PROGRESS', version: { increment: 1 } } });
         await this.audit.log(tx, ctx, { entity: 'production_output', entityId: out.id, action: 'create', diff: { number, order: o.number, warnings } });
-        return { id: out.id, number, warnings };
+        return { id: out.id, number, warnings, pendingConsumption };
       },
       { idempotent: true, timeoutMs: 60_000 },
     );
@@ -621,18 +690,50 @@ export class ProductionService {
     });
   }
 
-  close(ctx: RequestContext, id: string) {
+  /** Consume el pendiente según la ficha (p. ej. cuando llegó la compra después del ingreso de prendas). */
+  consumeBySheet(ctx: RequestContext, id: string) {
+    return this.uow.run(
+      ctx,
+      async (tx) => {
+        const o = await this.lock(tx, id);
+        this.assertActive(o);
+        const res = await this.consumeGap(tx, ctx, o, `Consumo según ficha ${o.number}`, false);
+        if (!res.consumed) throw new DomainError(ErrorCodes.VALIDACION, 'No hay consumos pendientes: lo entregado cubre la ficha de las prendas ingresadas.');
+        await this.audit.log(tx, ctx, { entity: 'production_order', entityId: id, action: 'consume_by_sheet', diff: { materials: res.consumed } });
+        return this.detailInTx(tx, ctx, id);
+      },
+      { idempotent: true, timeoutMs: 60_000 },
+    );
+  }
+
+  close(ctx: RequestContext, id: string, input: { acceptPendingConsumption?: boolean; reason?: string | null } = {}) {
     return this.uow.run(
       ctx,
       async (tx) => {
         const o = await this.lock(tx, id);
         if (!['IN_PROGRESS', 'COMPLETED'].includes(o.status)) throw new DomainError(ErrorCodes.TRANSICION_INVALIDA, 'Solo se cierran órdenes en curso o terminadas.');
         await this.assertNothingAtWorkshop(tx, o);
+        // Sin consumo de materiales el costo real queda subvaluado: se exige registrarlo o justificarlo.
+        const gaps = await this.consumptionGap(tx, o);
+        if (gaps.length && !input.acceptPendingConsumption) {
+          const items = await tx.item.findMany({ where: { id: { in: gaps.map((g) => g.materialItemId) } }, select: { id: true, sku: true } });
+          throw new DomainError(
+            ErrorCodes.VALIDACION,
+            `Falta registrar el consumo de materiales según la ficha: ${gaps.map((g) => `${items.find((i) => i.id === g.materialItemId)?.sku} (${g.qty.toString()})`).join(', ')}. Usá «Consumir según ficha» (si el material todavía no está en stock, registrá antes la recepción de la compra) o cerrá indicando por qué se usó menos.`,
+            422,
+            { pendingConsumption: gaps.map((g) => ({ materialItemId: g.materialItemId, qty: g.qty.toString() })) },
+          );
+        }
+        if (gaps.length && !input.reason?.trim()) throw new DomainError(ErrorCodes.VALIDACION, 'Indicá el motivo para cerrar sin registrar todo el consumo de materiales.');
         await this.releaseReservations(tx, ctx, o);
         await tx.workshopDispatch.updateMany({ where: { orderId: id, status: { in: ['SENT', 'PARTIALLY_RECEIVED', 'RECEIVED'] } }, data: { status: 'CLOSED' } });
         const snap = await this.actualCost(tx, ctx, o, 'ACTUAL');
         await tx.productionOrder.update({ where: { id }, data: { status: 'CLOSED', closedAt: new Date(), version: { increment: 1 } } });
-        await this.audit.log(tx, ctx, { entity: 'production_order', entityId: id, action: 'close', diff: { unitCost: snap.unitCost.toString(), total: snap.total.toString() } });
+        await this.audit.log(tx, ctx, {
+          entity: 'production_order', entityId: id, action: 'close',
+          diff: { unitCost: snap.unitCost.toString(), total: snap.total.toString(), ...(gaps.length ? { pendingConsumption: gaps.map((g) => ({ materialItemId: g.materialItemId, qty: g.qty.toString() })) } : {}) },
+          reason: gaps.length ? input.reason ?? undefined : undefined,
+        });
         return { id, cost: snap };
       },
       { idempotent: true },
@@ -663,7 +764,7 @@ export class ProductionService {
         ...(q.q ? { number: { contains: q.q, mode: 'insensitive' } } : {}),
       };
       const [rows, total] = await Promise.all([
-        tx.productionOrder.findMany({ where, include: { lines: true }, orderBy: [{ status: 'asc' }, { dueDate: 'asc' }, { createdAt: 'desc' }], skip: (q.page - 1) * q.pageSize, take: q.pageSize }),
+        tx.productionOrder.findMany({ where, include: { lines: true }, orderBy: { createdAt: 'desc' }, skip: (q.page - 1) * q.pageSize, take: q.pageSize }),
         tx.productionOrder.count({ where }),
       ]);
       const products = await tx.product.findMany({ where: { id: { in: rows.map((r) => r.productId) } }, select: { id: true, code: true, name: true } });
@@ -730,6 +831,9 @@ export class ProductionService {
       colors: colors.map((c) => ({ id: c.id, name: c.name, hex: c.hex })),
       cells: variants.map((v) => ({ itemId: v.itemId, sizeId: v.sizeId, colorId: v.colorId, sku: v.item.sku, isActive: v.item.isActive })),
       requirements,
+      pendingConsumption: (ACTIVE as readonly string[]).includes(o.status)
+        ? (await this.consumptionGap(tx, o)).map((g) => ({ materialItemId: g.materialItemId, sku: items.find((i) => i.id === g.materialItemId)?.sku, qty: g.qty.toString() }))
+        : [],
       stages: o.stages.map((s) => ({ ...s, stage: stages.find((x) => x.id === s.stageId), workshop: workshops.find((w) => w.id === s.workshopId) ?? null })),
       dispatches: dispatches.map((d) => ({ ...d, workshop: workshops.find((w) => w.id === d.workshopId) })),
       outputs: outputs.map((x) => ({

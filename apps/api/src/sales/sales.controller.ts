@@ -25,6 +25,7 @@ import {
   SalesOrderUpsertSchema,
   SalesRepUpsertSchema,
   VoidSchema,
+  zQueryBool,
 } from '@erp/contracts';
 import { Ctx, RequirePermissions } from '../common/decorators';
 import { ZodPipe } from '../common/zod.pipe';
@@ -41,13 +42,13 @@ const Page = z.object({
   status: z.string().optional(),
   customerId: z.string().uuid().optional(),
   kind: z.enum(['F', 'NC', 'ND']).optional(),
-  pendingInvoice: z.coerce.boolean().default(false),
+  pendingInvoice: zQueryBool().default(false),
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(200).default(50),
 });
 type PageQ = z.infer<typeof Page>;
 const Reason = VoidSchema;
-const CommissionQuery = z.object({ sellerUserId: z.string().uuid().optional(), pending: z.coerce.boolean().default(false) });
+const CommissionQuery = z.object({ sellerUserId: z.string().uuid().optional(), pending: zQueryBool().default(false) });
 
 @Controller('sales')
 export class SalesController {

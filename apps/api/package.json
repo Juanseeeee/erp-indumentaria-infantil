@@ -15,12 +15,14 @@
     "seed": "ts-node --transpile-only prisma/seed/index.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^1.6.0",
     "@erp/contracts": "workspace:*",
     "@erp/domain-core": "workspace:*",
     "@erp/domain-finance": "workspace:*",
     "@erp/domain-production": "workspace:*",
     "@erp/domain-sales": "workspace:*",
     "@erp/domain-stock": "workspace:*",
+    "@google/genai": "^3.0.0",
     "@nestjs/common": "^11.0.1",
     "@nestjs/core": "^11.0.1",
     "@nestjs/platform-express": "^11.0.1",

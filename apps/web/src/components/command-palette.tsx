@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Command } from 'cmdk';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowRight, Boxes, FileText, Package, Search, Users } from 'lucide-react';
+import { ArrowRight, Boxes, FileText, Package, Search, Sparkles, Users } from 'lucide-react';
 import { api } from '@/lib/api';
 import { useDebounced } from './data-table';
 import { NAV, type NavItem } from './nav';
@@ -21,7 +21,7 @@ interface Hit {
 const ICONS: Record<string, typeof Users> = { party: Users, product: Package, item: Boxes, stock_document: FileText };
 
 /** Paleta de comandos (Ctrl+K): busca entidades y ejecuta acciones de navegación. */
-export function CommandPalette({ open, setOpen }: { open: boolean; setOpen: (v: boolean) => void }) {
+export function CommandPalette({ open, setOpen, onAskAssistant }: { open: boolean; setOpen: (v: boolean) => void; onAskAssistant?: () => void }) {
   const router = useRouter();
   const can = useCan();
   const [q, setQ] = useState('');
@@ -91,6 +91,22 @@ export function CommandPalette({ open, setOpen }: { open: boolean; setOpen: (v: 
                   </Command.Item>
                 );
               })}
+            </Command.Group>
+          )}
+          {onAskAssistant && (
+            <Command.Group heading="Ayuda" className="text-xs text-muted [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1">
+              <Command.Item
+                value="asistente"
+                onSelect={() => {
+                  setOpen(false);
+                  onAskAssistant();
+                }}
+                className="flex cursor-pointer items-center gap-3 rounded-md px-2 py-2 text-sm text-text data-[selected=true]:bg-accent-soft"
+              >
+                <Sparkles className="size-4 text-accent" aria-hidden />
+                Preguntarle al asistente
+                <kbd className="ml-auto rounded border border-border px-1.5 text-xs text-muted">Ctrl J</kbd>
+              </Command.Item>
             </Command.Group>
           )}
           <Command.Group heading="Acciones" className="text-xs text-muted [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:py-1">

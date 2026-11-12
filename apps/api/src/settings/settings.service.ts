@@ -28,6 +28,15 @@ export const ApprovalRuleSchema = z.object({
 export const PaymentTermSchema = z.object({ name: z.string().trim().min(1), days: z.array(z.number().int().min(0).max(365)).min(1) });
 export const ZoneSchema = z.object({ name: z.string().trim().min(1) });
 export const CollectionSchema = z.object({ name: z.string().trim().min(1), seasonId: z.string().uuid() });
+/** Puntos de venta habituales de los comprobantes de proveedores (el primero es el predeterminado). */
+export const PurchasingPointsOfSaleSchema = z.object({
+  pointsOfSale: z
+    .array(z.number().int().min(0).max(99999))
+    .min(1, 'Dejá al menos un punto de venta')
+    .max(50)
+    .refine((a) => new Set(a).size === a.length, 'Hay puntos de venta repetidos'),
+});
+export const PURCHASING_POS_KEY = 'purchasing.pointsOfSale';
 
 const REQUIRED_PERMISSION: Record<z.infer<typeof ApprovalRuleSchema>['actionCode'], string> = {
   'inventory.adjust': 'inventory.adjust.approve',
@@ -69,7 +78,17 @@ export class SettingsService {
       company: await tx.company.findUniqueOrThrow({ where: { id: ctx.companyId } }),
       branches: await tx.branch.findMany(),
       approvalRules: await tx.approvalRule.findMany(),
+      purchasingPointsOfSale: ((await tx.setting.findUnique({ where: { companyId_key: { companyId: ctx.companyId, key: PURCHASING_POS_KEY } } }))?.value as number[] | undefined) ?? [1],
     }));
+  }
+
+  setPurchasingPointsOfSale(ctx: RequestContext, input: z.infer<typeof PurchasingPointsOfSaleSchema>) {
+    return this.uow.run(ctx, async (tx) => {
+      const key = { companyId: ctx.companyId, key: PURCHASING_POS_KEY };
+      await tx.setting.upsert({ where: { companyId_key: key }, create: { ...key, value: input.pointsOfSale }, update: { value: input.pointsOfSale } });
+      await this.audit.log(tx, ctx, { entity: 'setting', entityId: ctx.companyId, action: 'update', diff: { [PURCHASING_POS_KEY]: input.pointsOfSale } });
+      return input;
+    });
   }
 
   updateCompany(ctx: RequestContext, input: z.infer<typeof CompanyUpdateSchema>) {

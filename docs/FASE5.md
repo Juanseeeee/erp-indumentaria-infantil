@@ -63,7 +63,37 @@ Estado al 30/10/2026: **en curso**. Están hechos el tablero de Dirección, la r
 7. Como `administracion@ositos.demo` → **Alertas → Reglas**: cambiar los días de "Pedido sin preparar" y tocar "Revisar ahora".
 8. Como `ventas@ositos.demo` → **Nuevo pedido** para "Valeria Gómez (Boutique Mimitos)", modelo Body manga larga, curva 1: la tabla muestra "Bodies por 12 o más" (10 %) en cada línea. **Ventas → Promociones** muestra las tres del demo.
 
+## Correcciones tras las pruebas de los dueños (04/11)
+
+- Filtros sí/no de las pantallas: `false` se leía como verdadero. Stock mostraba solo lo crítico, y Terceros y Catálogo incluían inactivos. Ahora todos los filtros usan `zQueryBool`.
+- Listados de catálogo, materiales, terceros, stock y órdenes de producción: lo más nuevo primero.
+- Recepción de compra: casilla «El proveedor no va a entregar lo que falta». La OC queda cerrada y lo no entregado queda auditado. La OC muestra la columna Pendiente / No entregado.
+- Comprobantes de proveedor:
+  - Punto de venta predeterminado, configurable en Configuración → Empresa (`purchasing.pointsOfSale`, por defecto 1).
+  - Número sugerido: el último cargado de ese proveedor, tipo y punto de venta, más uno.
+  - Fecha: la de la recepción, editable.
+- Producción:
+  - Al ingresar prendas hechas en planta, los materiales no entregados se consumen según la ficha (backflush).
+  - Si falta stock, el consumo queda pendiente con aviso y botón «Consumir según ficha».
+  - La orden no se cierra con consumo pendiente, salvo que se indique un motivo (queda auditado). Así el costo real no queda sin materiales cuando la compra se registra después.
+
 ## Pendiente en esta fase
 
 - **Integraciones**: padrón ARCA, Mercado Pago y etiquetas ZPL.
 - **Manuales por rol.**
+
+## Asistente de IA (06/11)
+
+Panel lateral «Asistente» (botón en la barra superior, Ctrl+J o «Preguntarle al asistente» en Ctrl+K) que orienta al usuario sobre cómo usar la plataforma.
+
+- **Motores** (`ASSISTANT_PROVIDER`, por defecto `auto`):
+  - **Modo guía** (sin IA, gratis, local): busca la pregunta en la guía (BM25 con raíces en español y sinónimos, `assistant.guide.ts`) y muestra la sección más útil con enlaces y preguntas relacionadas clickeables; detecta números de documento y preguntas de stock y los consulta. Es el modo cuando no hay ninguna clave, y el respaldo automático si la IA falla, se agota el cupo o se supera el límite por usuario.
+  - **Gemini** (`GEMINI_API_KEY`, plan gratuito de Google AI Studio; modelo por defecto `gemini-3.8-flash`) vía `@google/genai`. En el plan gratuito Google puede usar el contenido enviado: usar con datos de demo o pasar a un plan pago.
+  - **Claude** (`ANTHROPIC_API_KEY`; `claude-opus-5-5`, esfuerzo `low`) vía `@anthropic-ai/sdk`, con fallback del servidor ante rechazos.
+  - Respuesta en streaming (SSE) por `POST /api/assistant/chat`; `GET /api/assistant/status` informa el modo y el panel lo muestra.
+- **Conocimiento:** `apps/api/src/assistant/knowledge/*.md` (≈ 23.000 palabras, escrita leyendo el código de cada pantalla y servicio). Va en el prompt de sistema con caché. **Al cambiar una pantalla o una regla, actualizar el .md correspondiente**: es la única fuente del asistente.
+- **Contexto por mensaje:** nombre, roles, permisos y pantalla actual del usuario, para responder según lo que puede ver y hacer.
+- **Consultas (solo lectura, con RLS y permisos del usuario):** `buscar` (buscador global), `consultar_stock` (físico/reservado/disponible por depósito), `consultar_documento` (estado de pedidos, remitos, comprobantes, recibos, OC, recepciones, OP, órdenes de pago y movimientos por número). El asistente nunca crea ni modifica datos.
+- **Límites:** 30 mensajes por usuario cada 10 minutos (`ASSISTANT_RATE_LIMIT`), últimos 20 mensajes de historial, hasta 6 rondas de consultas por respuesta. La conversación vive en la pestaña (sessionStorage), no en el servidor.
+- **Privacidad:** con Claude o Gemini, las preguntas, la guía y los resultados de las consultas se envían a ese proveedor. El modo guía no envía nada.
+- **Pruebas:** `apps/api/test/assistant.test.ts` (Claude) y `assistant-modes.test.ts` (Gemini, cupo agotado → guía, modo guía) contra servidores falsos con el protocolo de streaming de cada API.

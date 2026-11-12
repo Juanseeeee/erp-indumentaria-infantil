@@ -1,4 +1,5 @@
 import { Body, Controller, Delete, Get, HttpCode, Param, ParseUUIDPipe, Post, Req, Res } from '@nestjs/common';
+import { secureCookies } from '../common/origin';
 import type { Request, Response } from 'express';
 import { DomainError } from '@erp/domain-core';
 import { LoginInput, LoginSchema } from '@erp/contracts';
@@ -43,7 +44,7 @@ export class AuthController {
       ip: req.ip,
       userAgent: req.headers['user-agent'],
     });
-    const secure = process.env.COOKIE_SECURE === 'true';
+    const secure = secureCookies();
     res.cookie(SESSION_COOKIE, token, { httpOnly: true, secure, sameSite: 'lax', path: '/', expires: expiresAt });
     res.cookie(CSRF_COOKIE, csrfToken, { httpOnly: false, secure, sameSite: 'lax', path: '/', expires: expiresAt });
     return { ok: true };

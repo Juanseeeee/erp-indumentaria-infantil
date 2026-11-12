@@ -14,6 +14,9 @@ export const zDecimal = (opts: { scale?: number; min?: string; positive?: boolea
 export const zQty = () => zDecimal({ scale: 4 });
 export const zMoney = () => zDecimal({ scale: 2 });
 export const zUuid = () => z.string().uuid('Identificador inválido');
+/** Booleano de query string: z.coerce.boolean() toma "false" como true. */
+export const zQueryBool = () =>
+  z.preprocess((v) => (typeof v === 'string' ? v === 'true' || v === '1' : v), z.boolean());
 
 const trimmed = (max = 200) => z.string().trim().min(1, 'Requerido').max(max);
 const optionalText = (max = 500) =>
@@ -43,7 +46,7 @@ export const ListQuerySchema = z.object({
   q: z.string().trim().optional(),
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(200).default(50),
-  includeInactive: z.coerce.boolean().default(false),
+  includeInactive: zQueryBool().default(false),
 });
 export type ListQuery = z.infer<typeof ListQuerySchema>;
 
@@ -247,7 +250,7 @@ export type StockDocumentCreateInput = z.infer<typeof StockDocumentCreateSchema>
 export const StockQuerySchema = ListQuerySchema.extend({
   warehouseId: zUuid().optional(),
   kind: z.enum(['VARIANT', 'MATERIAL']).optional(),
-  onlyCritical: z.coerce.boolean().default(false),
+  onlyCritical: zQueryBool().default(false),
 });
 
 export const KardexQuerySchema = z.object({

@@ -8,6 +8,7 @@ import {
   PurchaseRequestCreateSchema,
   SupplierInvoiceCreateInput,
   SupplierInvoiceCreateSchema,
+  zQueryBool,
 } from '@erp/contracts';
 import { Ctx, RequirePermissions } from '../common/decorators';
 import { ZodPipe } from '../common/zod.pipe';
@@ -20,7 +21,12 @@ const Page = z.object({
   page: z.coerce.number().int().min(1).default(1),
   pageSize: z.coerce.number().int().min(1).max(200).default(50),
 });
-const ReceiptQuery = z.object({ supplierId: z.string().uuid().optional(), pendingInvoice: z.coerce.boolean().default(false) });
+const InvoiceDefaultsQuery = z.object({
+  supplierId: z.string().uuid().optional(),
+  docType: SupplierInvoiceCreateSchema.shape.docType.default('FA'),
+  pointOfSale: z.coerce.number().int().min(0).max(99999).optional(),
+});
+const ReceiptQuery = z.object({ supplierId: z.string().uuid().optional(), pendingInvoice: zQueryBool().default(false) });
 const Reason = z.object({ reason: z.string().trim().min(3, 'Indicá el motivo') });
 
 @Controller('purchasing')
@@ -97,6 +103,13 @@ export class PurchasingController {
   @RequirePermissions('purchasing.view')
   invoices(@Ctx() ctx: RequestContext, @Query(new ZodPipe(Page)) q: z.infer<typeof Page>) {
     return this.purchasing.listInvoices(ctx, q);
+  }
+
+  /** Valores sugeridos al cargar un comprobante: puntos de venta configurados y próximo número. */
+  @Get('invoices/defaults')
+  @RequirePermissions('purchasing.invoice')
+  invoiceDefaults(@Ctx() ctx: RequestContext, @Query(new ZodPipe(InvoiceDefaultsQuery)) q: z.infer<typeof InvoiceDefaultsQuery>) {
+    return this.purchasing.invoiceDefaults(ctx, q);
   }
 
   @Get('invoices/:id')

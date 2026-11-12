@@ -42,7 +42,7 @@ export class CatalogService {
       const [rows, total] = await Promise.all([
         tx.product.findMany({
           where,
-          orderBy: { code: 'asc' },
+          orderBy: [{ createdAt: 'desc' }, { code: 'asc' }],
           skip: (q.page - 1) * q.pageSize,
           take: q.pageSize,
           include: { _count: { select: { variants: true } } },

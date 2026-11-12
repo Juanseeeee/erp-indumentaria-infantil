@@ -23,7 +23,9 @@ export class AlertsScheduler implements OnApplicationBootstrap, OnApplicationShu
   ) {}
 
   onApplicationBootstrap() {
-    const minutes = Number(process.env.ALERTS_INTERVAL_MINUTES ?? 15);
+    // En Vercel la API corre como función serverless: los temporizadores no son confiables y cada
+    // instancia tendría el suyo. Ahí la evaluación automática queda apagada salvo que se configure.
+    const minutes = Number(process.env.ALERTS_INTERVAL_MINUTES ?? (process.env.VERCEL ? 0 : 15));
     if (process.env.NODE_ENV === 'test' || !Number.isFinite(minutes) || minutes <= 0) return;
     // Primera pasada al minuto de arrancar, para no competir con el arranque.
     this.timers = [setTimeout(() => void this.tick(), 60_000), setInterval(() => void this.tick(), minutes * 60_000)];
@@ -34,9 +36,11 @@ export class AlertsScheduler implements OnApplicationBootstrap, OnApplicationShu
     for (const t of this.timers) clearTimeout(t);
   }
 
-  async tick() {
-    if (this.running) return;
+  /** Evalúa todas las empresas. La usan el temporizador (servidor propio) y el Cron de Vercel. */
+  async tick(): Promise<{ companies: number; created: number; resolved: number; sent: number; failed: number; errors: number } | { skipped: true }> {
+    if (this.running) return { skipped: true };
     this.running = true;
+    const total = { companies: 0, created: 0, resolved: 0, sent: 0, failed: 0, errors: 0 };
     try {
       const companies = await this.prisma.companyUser.findMany({ where: { isActive: true }, distinct: ['companyId'], select: { companyId: true } });
       for (const { companyId } of companies) {
@@ -44,11 +48,18 @@ export class AlertsScheduler implements OnApplicationBootstrap, OnApplicationShu
         try {
           const r = await this.alerts.evaluate(ctx);
           const m = await this.mailer.dispatch(ctx);
+          total.companies++;
+          total.created += r.created;
+          total.resolved += r.resolved;
+          total.sent += m.sent;
+          total.failed += m.failed;
           if (r.created || r.resolved || m.sent || m.failed) this.logger.log(`Empresa ${companyId}: ${r.created} alertas nuevas, ${r.resolved} resueltas, ${m.sent} correos enviados, ${m.failed} con error.`);
         } catch (e) {
+          total.errors++;
           this.logger.error(`Alertas de la empresa ${companyId}: ${(e as Error).message}`);
         }
       }
+      return total;
     } finally {
       this.running = false;
     }

@@ -82,6 +82,9 @@ test('ventas no ve configuración ni puede ajustar stock', async ({ page }) => {
   await login(page, 'ventas@ositos.demo');
   const nav = page.getByRole('navigation', { name: 'Navegación principal' }).first();
   await expect(nav.getByRole('link', { name: 'Configuración' })).toHaveCount(0);
+  // Las secciones del menú se pliegan: se abre la que haga falta.
+  const section = nav.getByRole('button', { name: 'Terceros' });
+  if ((await section.getAttribute('aria-expanded')) === 'false') await section.click();
   await expect(nav.getByRole('link', { name: 'Clientes' })).toBeVisible();
   await page.goto('/stock');
   await expect(page.getByRole('link', { name: 'Ajuste' })).toHaveCount(0);

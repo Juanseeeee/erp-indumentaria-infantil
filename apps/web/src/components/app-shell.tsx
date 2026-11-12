@@ -4,12 +4,13 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { Bell, LogOut, Menu, Search, X } from 'lucide-react';
+import { Bell, ChevronRight, LogOut, Menu, Search, Sparkles, X } from 'lucide-react';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/format';
 import { useCan, useMe } from '@/lib/session';
 import { NAV } from './nav';
 import { CommandPalette } from './command-palette';
+import { AssistantPanel } from './assistant';
 import { Spinner } from './ui';
 
 export function AppShell({ children }: { children: ReactNode }) {
@@ -21,6 +22,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   const can = useCan();
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [assistantOpen, setAssistantOpen] = useState(false);
+  const nav = useOpenSections();
   const gPressed = useRef(false);
 
   // Atajos: Ctrl+K paleta, "/" foco en búsqueda de la tabla, G + tecla navegación.
@@ -31,6 +34,11 @@ export function AppShell({ children }: { children: ReactNode }) {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
         e.preventDefault();
         setPaletteOpen((v) => !v);
+        return;
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'j') {
+        e.preventDefault();
+        setAssistantOpen((v) => !v);
         return;
       }
       if (typing) return;
@@ -59,6 +67,14 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   useEffect(() => setMobileOpen(false), [pathname]);
 
+  // Al entrar a una pantalla, su sección del menú se abre (las demás quedan como el usuario las dejó).
+  useEffect(() => {
+    if (!nav.loaded) return;
+    const section = NAV.find((s) => s.title && s.items.some((it) => pathname === it.href.split('?')[0] || pathname.startsWith(it.href.split('?')[0] + '/')));
+    if (section?.title) nav.ensure(section.title);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pathname, nav.loaded]);
+
   const logout = async () => {
     await api.post('/auth/logout').catch(() => undefined);
     qc.clear();
@@ -76,18 +92,33 @@ export function AppShell({ children }: { children: ReactNode }) {
   };
 
   const sidebar = (
-    <nav aria-label="Navegación principal" className="flex h-full flex-col gap-4 overflow-y-auto px-3 py-4">
-      <div className="px-2">
+    <nav aria-label="Navegación principal" className="flex h-full flex-col gap-1.5 overflow-y-auto px-3 py-4">
+      <div className="mb-2 px-2">
         <p className="text-sm font-semibold">{me.company.tradeName ?? me.company.legalName}</p>
         <p className="text-xs text-muted">ERP Indumentaria</p>
       </div>
       {NAV.map((section, i) => {
         const items = section.items.filter((it) => !it.perm || can(it.perm));
         if (!items.length) return null;
+        const title = section.title;
+        const expanded = !title || nav.open.includes(title);
+        const listId = `nav-${i}`;
         return (
           <div key={i}>
-            {section.title && <p className="mb-1 px-2 text-xs font-medium tracking-wide text-muted uppercase">{section.title}</p>}
-            <ul className="flex flex-col gap-0.5">
+            {title && (
+              <button
+                type="button"
+                onClick={() => nav.toggle(title)}
+                aria-expanded={expanded}
+                aria-controls={listId}
+                className="flex w-full items-center gap-1 rounded-md px-2 py-1 text-xs font-medium tracking-wide text-muted uppercase hover:bg-surface-2 hover:text-text"
+              >
+                <ChevronRight className={cn('size-3.5 transition-transform', expanded && 'rotate-90')} aria-hidden />
+                <span className="flex-1 text-left">{title}</span>
+                {!expanded && items.some((it) => isActive(it.href)) && <span className="size-1.5 rounded-full bg-accent" aria-label="Sección actual" />}
+              </button>
+            )}
+            <ul id={listId} hidden={!expanded} className="mt-0.5 flex flex-col gap-0.5">
               {items.map((it) => (
                 <li key={it.href}>
                   <Link
@@ -134,6 +165,18 @@ export function AppShell({ children }: { children: ReactNode }) {
             <kbd className="hidden rounded border border-border px-1.5 text-xs sm:inline">Ctrl K</kbd>
           </button>
           <div className="ml-auto flex items-center gap-3">
+            <button
+              onClick={() => setAssistantOpen((v) => !v)}
+              aria-pressed={assistantOpen}
+              title="Asistente (Ctrl J)"
+              className={cn(
+                'flex h-9 items-center gap-1.5 rounded-md border px-2.5 text-sm',
+                assistantOpen ? 'border-accent bg-accent-soft text-accent' : 'border-border text-text hover:bg-surface-2',
+              )}
+            >
+              <Sparkles className="size-4 text-accent" aria-hidden />
+              <span className="hidden sm:inline">Asistente</span>
+            </button>
             <AlertsBell />
             <Link href="/cuenta" className="hidden text-right sm:block">
               <p className="text-sm font-medium">{me.user.name}</p>
@@ -144,11 +187,46 @@ export function AppShell({ children }: { children: ReactNode }) {
             </button>
           </div>
         </header>
-        <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6">{children}</main>
+        <main className={cn('mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6', assistantOpen && 'xl:pr-[436px]')}>{children}</main>
       </div>
-      <CommandPalette open={paletteOpen} setOpen={setPaletteOpen} />
+      <CommandPalette open={paletteOpen} setOpen={setPaletteOpen} onAskAssistant={() => setAssistantOpen(true)} />
+      <AssistantPanel open={assistantOpen} onClose={() => setAssistantOpen(false)} />
     </div>
   );
+}
+
+const NAV_STORAGE_KEY = 'erp-nav-open-sections';
+
+/** Secciones del menú que el usuario dejó abiertas (se recuerdan en este navegador). */
+function useOpenSections() {
+  const [open, setOpen] = useState<string[]>([]);
+  const [loaded, setLoaded] = useState(false);
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(NAV_STORAGE_KEY);
+      if (saved) setOpen(JSON.parse(saved) as string[]);
+    } catch {
+      /* sin almacenamiento: se abre solo la sección actual */
+    }
+    setLoaded(true);
+  }, []);
+  const change = (fn: (prev: string[]) => string[]) =>
+    setOpen((prev) => {
+      const next = fn(prev);
+      if (next === prev) return prev;
+      try {
+        localStorage.setItem(NAV_STORAGE_KEY, JSON.stringify(next));
+      } catch {
+        /* ignorar */
+      }
+      return next;
+    });
+  return {
+    open,
+    loaded,
+    toggle: (title: string) => change((prev) => (prev.includes(title) ? prev.filter((t) => t !== title) : [...prev, title])),
+    ensure: (title: string) => change((prev) => (prev.includes(title) ? prev : [...prev, title])),
+  };
 }
 
 /** Campana: alertas nuevas del usuario. Se refresca cada minuto y al volver a la pestaña. */

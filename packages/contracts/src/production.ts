@@ -54,6 +54,8 @@ export const GoodsReceiptCreateSchema = z.object({
   purchaseOrderId: zUuid().optional().nullable(),
   supplierDeliveryNote: optionalText(60),
   notes: optionalText(2000),
+  /** El proveedor no entrega lo que falta: la OC se cierra con esta recepción. */
+  closePending: z.boolean().default(false),
   lines: z
     .array(
       z.object({

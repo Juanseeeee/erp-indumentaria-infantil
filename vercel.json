@@ -1,0 +1,39 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "services": {
+    "api": {
+      "root": "apps/api",
+      "framework": "nestjs",
+      "installCommand": "cd ../.. && pnpm install --frozen-lockfile",
+      "buildCommand": "cd ../.. && pnpm --filter @erp/api run prisma:generate && if [ \"$VERCEL_ENV\" = \"production\" ]; then pnpm --filter @erp/api run prisma:deploy; fi && pnpm turbo run build --filter=@erp/api",
+      "functions": {
+        "src/main.ts": {
+          "includeFiles": "src/assistant/knowledge/**",
+          "maxDuration": 300
+        }
+      }
+    },
+    "web": {
+      "root": "apps/web",
+      "framework": "nextjs",
+      "installCommand": "cd ../.. && pnpm install --frozen-lockfile",
+      "buildCommand": "cd ../.. && pnpm turbo run build --filter=@erp/web"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": { "service": "api" }
+    },
+    {
+      "source": "/(.*)",
+      "destination": { "service": "web" }
+    }
+  ],
+  "crons": [
+    {
+      "path": "/api/cron/alerts",
+      "schedule": "0 11 * * *"
+    }
+  ]
+}

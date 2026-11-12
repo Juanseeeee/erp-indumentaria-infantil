@@ -57,6 +57,9 @@ import { AlertsController } from './alerts/alerts.controller';
 import { AlertsService } from './alerts/alerts.service';
 import { AlertsScheduler } from './alerts/alerts.scheduler';
 import { EmailDispatcher } from './alerts/email-dispatcher';
+import { CronController } from './alerts/cron.controller';
+import { AssistantController } from './assistant/assistant.controller';
+import { AssistantService } from './assistant/assistant.service';
 
 @Controller('health')
 class HealthController {
@@ -101,6 +104,8 @@ export class StockModule {}
     PeriodsController,
     ReportsController,
     AlertsController,
+    AssistantController,
+    CronController,
   ],
   providers: [
     AuthService,
@@ -140,6 +145,7 @@ export class StockModule {}
     AlertsService,
     EmailDispatcher,
     AlertsScheduler,
+    AssistantService,
     { provide: APP_GUARD, useClass: AuthGuard },
     { provide: APP_FILTER, useClass: ErrorFilter },
   ],

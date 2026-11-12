@@ -58,7 +58,7 @@ export class PartiesService {
           : {}),
       };
       const [rows, total] = await Promise.all([
-        tx.party.findMany({ where, include, orderBy: { legalName: 'asc' }, skip: (q.page - 1) * q.pageSize, take: q.pageSize }),
+        tx.party.findMany({ where, include, orderBy: [{ createdAt: 'desc' }, { legalName: 'asc' }], skip: (q.page - 1) * q.pageSize, take: q.pageSize }),
         tx.party.count({ where }),
       ]);
       return { total, rows: rows.map((p) => this.present(ctx, p)) };

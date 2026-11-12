@@ -76,6 +76,7 @@ export default function SettingsPage() {
       api.get<{
         company: { legalName: string; tradeName: string | null; cuit: string; address: string | null };
         approvalRules: { actionCode: string; threshold: string; isActive: boolean }[];
+        purchasingPointsOfSale: number[];
       }>('/settings/company'),
     enabled: can('settings.company.view'),
   });
@@ -93,6 +94,7 @@ export default function SettingsPage() {
   const mZone = useSave('/settings/zones');
   const mCompany = useSave('/settings/company', 'put');
   const mRule = useSave('/settings/approval-rules', 'put');
+  const mPos = useSave('/settings/purchasing-points-of-sale', 'put');
 
   if (!md) return <Spinner />;
   const uomCode = (id: string) => md.uoms.find((u) => u.id === id)?.code;
@@ -132,6 +134,7 @@ export default function SettingsPage() {
               )}
             </form>
           </Card>
+          <PointsOfSaleCard values={company.data.purchasingPointsOfSale} canEdit={can('settings.company.edit')} mutation={mPos} />
           <RuleCard
             title="Aprobación de ajustes de stock"
             description="Los ajustes valorizados por encima de este monto quedan pendientes hasta que los apruebe otra persona con permiso."
@@ -336,6 +339,61 @@ export default function SettingsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+/** Puntos de venta con los que facturan los proveedores: se ofrecen al cargar sus comprobantes. */
+function PointsOfSaleCard({
+  values,
+  canEdit,
+  mutation,
+}: {
+  values: number[];
+  canEdit: boolean;
+  mutation: { mutate: (body: Record<string, unknown>) => void; isPending: boolean };
+}) {
+  const save = (pointsOfSale: number[]) => mutation.mutate({ pointsOfSale });
+  return (
+    <Card className="p-4">
+      <h2 className="font-medium">Puntos de venta de proveedores</h2>
+      <p className="mt-1 mb-3 text-sm text-muted">
+        Se ofrecen al cargar facturas de proveedores. El primero es el predeterminado; el número se sugiere como el siguiente al último cargado de ese proveedor.
+      </p>
+      <div className="mb-3 flex flex-wrap gap-2">
+        {values.map((p, i) => (
+          <span key={p} className="flex items-center gap-2 rounded-md border border-border px-2 py-1 text-sm">
+            <span className="num">{String(p).padStart(5, '0')}</span>
+            {i === 0 ? (
+              <Badge tone="accent">Predeterminado</Badge>
+            ) : (
+              canEdit && (
+                <>
+                  <button type="button" className="text-xs text-accent hover:underline" onClick={() => save([p, ...values.filter((x) => x !== p)])}>Hacer predeterminado</button>
+                  <button type="button" className="text-xs text-muted hover:underline" aria-label={`Quitar ${p}`} onClick={() => save(values.filter((x) => x !== p))}>Quitar</button>
+                </>
+              )
+            )}
+          </span>
+        ))}
+      </div>
+      {canEdit && (
+        <form
+          className="flex items-end gap-3"
+          onSubmit={(e) => {
+            e.preventDefault();
+            const form = e.currentTarget;
+            const n = Number(new FormData(form).get('pos'));
+            if (Number.isInteger(n) && n >= 0 && !values.includes(n)) save([...values, n]);
+            form.reset();
+          }}
+        >
+          <Field label="Punto de venta" htmlFor="newpos">
+            <Input id="newpos" name="pos" inputMode="numeric" className="w-28" required pattern="\d{1,5}" />
+          </Field>
+          <Button type="submit" loading={mutation.isPending}>Agregar</Button>
+        </form>
+      )}
+    </Card>
   );
 }
 

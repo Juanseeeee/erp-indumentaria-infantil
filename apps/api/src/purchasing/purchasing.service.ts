@@ -14,6 +14,7 @@ import { UnitOfWork } from '../common/unit-of-work';
 import { AuditService, NumberingService } from '../common/common.service';
 import { StockService } from '../inventory/stock.service';
 import { AccountsService } from '../accounts/accounts.service';
+import { PURCHASING_POS_KEY } from '../settings/settings.service';
 
 const NC_TYPES = new Set(['NCA', 'NCB', 'NCC']);
 
@@ -285,7 +286,14 @@ export class PurchasingService {
         if (po) {
           const lines = await tx.purchaseOrderLine.findMany({ where: { orderId: po.id } });
           const complete = lines.every((x) => dec(x.receivedQty.toString()).gte(x.qty.toString()));
-          await tx.purchaseOrder.update({ where: { id: po.id }, data: { status: complete ? 'RECEIVED' : 'PARTIALLY_RECEIVED', version: { increment: 1 } } });
+          const status: PurchaseOrderStatus = complete ? 'RECEIVED' : input.closePending ? 'CLOSED' : 'PARTIALLY_RECEIVED';
+          await tx.purchaseOrder.update({ where: { id: po.id }, data: { status, version: { increment: 1 } } });
+          if (status === 'CLOSED') {
+            const short = lines
+              .filter((x) => dec(x.receivedQty.toString()).lt(x.qty.toString()))
+              .map((x) => ({ itemId: x.itemId, ordered: x.qty.toString(), received: x.receivedQty.toString(), notDelivered: dec(x.qty.toString()).minus(x.receivedQty.toString()).toString() }));
+            await this.audit.log(tx, ctx, { entity: 'purchase_order', entityId: po.id, action: 'close', diff: { receipt: number, short }, reason: `El proveedor no entrega el resto (${number})` });
+          }
         }
         await this.audit.log(tx, ctx, { entity: 'goods_receipt', entityId: receipt.id, action: 'create', diff: { number, purchaseOrder: po?.number ?? null } });
         return tx.goodsReceipt.findUniqueOrThrow({ where: { id: receipt.id }, include: { lines: true } });
@@ -408,6 +416,22 @@ export class PurchasingService {
       },
       { idempotent: true },
     );
+  }
+
+  invoiceDefaults(ctx: RequestContext, q: { supplierId?: string; docType: string; pointOfSale?: number }) {
+    return this.uow.run(ctx, async (tx) => {
+      const pointsOfSale = await this.setting<number[]>(tx, ctx.companyId, PURCHASING_POS_KEY, [1]);
+      const pointOfSale = q.pointOfSale ?? pointsOfSale[0] ?? 1;
+      // Próximo número: el último cargado de ese proveedor, tipo y punto de venta + 1.
+      const last = q.supplierId
+        ? await tx.fiscalDocument.findFirst({
+            where: { direction: 'PURCHASE', partyId: q.supplierId, docType: q.docType, pointOfSale },
+            orderBy: { number: 'desc' },
+            select: { number: true },
+          })
+        : null;
+      return { pointsOfSale, pointOfSale, nextNumber: last ? Number(last.number) + 1 : null };
+    });
   }
 
   listInvoices(ctx: RequestContext, q: { supplierId?: string; page: number; pageSize: number }) {

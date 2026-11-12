@@ -45,6 +45,8 @@ interface Detail {
   cells: (GridCell & { sku: string })[];
   lines: { id: string; variantItemId: string; plannedQty: string; goodQty: string; secondQty: string; scrapQty: string }[];
   requirements: Requirement[];
+  /** Consumo según ficha que falta registrar por las prendas ya ingresadas. */
+  pendingConsumption: { materialItemId: string; sku?: string; qty: string }[];
   stages: { id: string; stageId: string; status: string; completedQty: string; defectQty: string; stage?: { name: string; isExternal: boolean }; workshop: { legalName: string } | null }[];
   dispatches: { id: string; number: string; status: string; sentAt: string; expectedAt: string | null; workshopId: string; workshop?: { legalName: string }; lines: { id: string; kind: string; itemId: string; qty: string; receivedQty: string }[] }[];
   outputs: { id: string; number: string; createdAt: string; workshopId: string | null; settlementId: string | null; lines: { variantItemId: string; approvedQty: string; secondQty: string; scrapQty: string; unitCost: string | null }[] }[];
@@ -70,7 +72,9 @@ export default function ProductionOrderPage({ params }: { params: Promise<{ id: 
   const { data: md } = useMasterData();
   const [tab, setTab] = useState('prendas');
   const [cancelling, setCancelling] = useState(false);
+  const [closingShort, setClosingShort] = useState(false);
   const [reason, setReason] = useState('');
+  const [closeReason, setCloseReason] = useState('');
   const { data: o, isLoading, error } = useQuery({ queryKey: ['production-order', id], queryFn: () => api.get<Detail>(`/production/orders/${id}`) });
   const config = useQuery({ queryKey: ['production-config'], queryFn: () => api.get<Config>('/production/config') });
   const refresh = () => {
@@ -81,6 +85,7 @@ export default function ProductionOrderPage({ params }: { params: Promise<{ id: 
   const release = useAction(`/production/orders/${id}/release`, refresh, 'Orden liberada: ficha congelada y materiales reservados.');
   const close = useAction(`/production/orders/${id}/close`, refresh, 'Orden cerrada. Se calculó el costo real.');
   const cancel = useAction(`/production/orders/${id}/cancel`, refresh, 'Orden cancelada.');
+  const consume = useAction(`/production/orders/${id}/consume-by-sheet`, refresh, 'Consumo de materiales registrado según la ficha.');
   const purchaseReq = useMutation({
     mutationFn: () => api.post<{ number: string }>(`/production/orders/${id}/purchase-request`),
     onSuccess: (r) => toast.success(`Se creó la solicitud de compra ${r.number}.`),
@@ -109,7 +114,13 @@ export default function ProductionOrderPage({ params }: { params: Promise<{ id: 
               <Button variant="secondary" loading={purchaseReq.isPending} onClick={() => purchaseReq.mutate()}>Pedir faltantes a Compras</Button>
             )}
             {['IN_PROGRESS', 'COMPLETED'].includes(o.status) && can('production.plan') && (
-              <Button variant={o.status === 'COMPLETED' ? 'primary' : 'secondary'} loading={close.isPending} onClick={() => close.mutate({})}>Cerrar y calcular costo</Button>
+              <Button
+                variant={o.status === 'COMPLETED' ? 'primary' : 'secondary'}
+                loading={close.isPending}
+                onClick={() => (o.pendingConsumption.length ? setClosingShort(true) : close.mutate({}))}
+              >
+                Cerrar y calcular costo
+              </Button>
             )}
             {['DRAFT', 'RELEASED', 'IN_PROGRESS'].includes(o.status) && can('production.plan') && !cancelling && (
               <Button variant="ghost" onClick={() => setCancelling(true)}>Cancelar</Button>
@@ -132,9 +143,35 @@ export default function ProductionOrderPage({ params }: { params: Promise<{ id: 
           />
         </div>
       )}
+      {closingShort && (
+        <div className="mb-4">
+          <ConfirmPanel
+            title={`Cerrar ${o.number} sin registrar todo el consumo`}
+            impact={`Falta consumir según la ficha: ${o.pendingConsumption.map((p) => `${p.sku} ${fmtQty(p.qty)}`).join(', ')}. Si el material se usó, primero registrá la recepción de la compra y «Consumir según ficha»: si cerrás así, el costo real no lo incluye.`}
+            requireReason
+            reason={closeReason}
+            setReason={setCloseReason}
+            confirmLabel="Cerrar igual"
+            loading={close.isPending}
+            onConfirm={() => close.mutate({ acceptPendingConsumption: true, reason: closeReason }, { onSuccess: () => setClosingShort(false) })}
+            onCancel={() => setClosingShort(false)}
+          />
+        </div>
+      )}
+      {active && o.pendingConsumption.length > 0 && (
+        <div className="mb-4 flex flex-wrap items-center gap-3 rounded-md bg-warning-soft px-3 py-2 text-sm text-warning">
+          <AlertTriangle className="size-4" aria-hidden />
+          <span className="flex-1">
+            Consumo de materiales pendiente por las prendas ya ingresadas: {o.pendingConsumption.map((p) => `${p.sku} (${fmtQty(p.qty)})`).join(', ')}. Cuando el material esté en stock (recepción de compra registrada), registralo para que el costo real lo incluya.
+          </span>
+          {can('production.materials') && (
+            <Button size="sm" loading={consume.isPending} onClick={() => consume.mutate({})}>Consumir según ficha</Button>
+          )}
+        </div>
+      )}
       {active && shortages.length > 0 && (
         <p className="mb-4 flex items-center gap-2 rounded-md bg-warning-soft px-3 py-2 text-sm text-warning">
-          <AlertTriangle className="size-4" aria-hidden /> Faltan materiales: {shortages.map((s) => `${s.item?.sku} (${fmtQty(s.shortage)} ${s.uom ?? ''})`).join(', ')}.
+          <AlertTriangle className="size-4" aria-hidden /> Faltan materiales: {shortages.map((s) => `${s.item?.sku} (${fmtQty(s.shortage)} ${s.uom ?? ''})`).join(', ')}. Se reservó lo disponible; lo que falta se reserva y consume cuando registres la recepción de la compra.
         </p>
       )}
 
@@ -236,7 +273,9 @@ function MaterialsTab({ o, active, onDone }: { o: Detail; active: boolean; onDon
         <div className="flex flex-wrap gap-2 border-b border-border p-3">
           <Button size="sm" onClick={() => start('issue')}>Entregar a planta (corte propio)</Button>
           <Button size="sm" variant="secondary" onClick={() => start('return')}>Devolver sobrante de planta</Button>
-          <span className="self-center text-xs text-muted">Para enviar materiales a un taller usá la pestaña Talleres.</span>
+          <span className="w-full text-xs text-muted">
+            Corte y planta propia: «Entregar a planta» descuenta del depósito de materiales. Talleres externos: en la pestaña Talleres se arma el envío con las prendas cortadas y los materiales, que pasan al depósito del taller y se consumen al recibir las prendas. Si se ingresan prendas hechas en planta sin haber entregado materiales, se consumen solos según la ficha.
+          </span>
         </div>
       )}
       <table className="w-full text-sm">

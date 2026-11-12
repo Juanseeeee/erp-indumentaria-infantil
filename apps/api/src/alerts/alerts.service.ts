@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { webOrigin } from '../common/origin';
 import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { DomainError, ErrorCodes } from '@erp/domain-core';
@@ -245,7 +246,7 @@ export class AlertsService {
     if (!fresh.length) return 0;
     const company = await tx.company.findUnique({ where: { id: companyId }, select: { legalName: true, tradeName: true } });
     const companyName = company?.tradeName ?? company?.legalName ?? 'la empresa';
-    const origin = (process.env.WEB_ORIGIN ?? 'http://localhost:3000').replace(/\/$/, '');
+    const origin = webOrigin();
     const inbox = new Map<string, { email: string; name: string; items: { rule: string; title: string; detail: string | null; link: string | null; priority: string }[] }>();
     for (const f of fresh) {
       for (const u of await this.recipients(tx, companyId, f.rule)) {

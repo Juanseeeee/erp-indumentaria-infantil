@@ -37,6 +37,9 @@ const LinesSchema = z.object({ lines: z.array(z.object({ variantItemId: z.string
 const WriteOffSchema = ReturnMaterialsSchema.and(z.object({ reason: z.string().trim().min(3, 'Indicá el motivo') }));
 const WorkshopQuery = z.object({ workshopId: z.string().uuid() });
 const OptionalWorkshop = z.object({ workshopId: z.string().uuid().optional() });
+const CloseSchema = z
+  .object({ acceptPendingConsumption: z.boolean().default(false), reason: z.string().trim().max(500).optional().nullable() })
+  .default({});
 
 @Controller('production')
 export class ProductionController {
@@ -198,8 +201,14 @@ export class ProductionController {
 
   @Post('orders/:id/close')
   @RequirePermissions('production.plan')
-  close(@Ctx() ctx: RequestContext, @Param('id', ParseUUIDPipe) id: string) {
-    return this.production.close(ctx, id);
+  close(@Ctx() ctx: RequestContext, @Param('id', ParseUUIDPipe) id: string, @Body(new ZodPipe(CloseSchema)) b: z.infer<typeof CloseSchema>) {
+    return this.production.close(ctx, id, b);
+  }
+
+  @Post('orders/:id/consume-by-sheet')
+  @RequirePermissions('production.materials')
+  consumeBySheet(@Ctx() ctx: RequestContext, @Param('id', ParseUUIDPipe) id: string) {
+    return this.production.consumeBySheet(ctx, id);
   }
 
   @Post('orders/:id/cancel')

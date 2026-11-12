@@ -34,7 +34,7 @@ export class MaterialsService {
         tx.material.findMany({
           where,
           include: { item: true },
-          orderBy: { item: { sku: 'asc' } },
+          orderBy: [{ item: { createdAt: 'desc' } }, { item: { sku: 'asc' } }],
           skip: (q.page - 1) * q.pageSize,
           take: q.pageSize,
         }),

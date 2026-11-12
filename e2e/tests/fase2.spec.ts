@@ -74,6 +74,9 @@ test('operario informa avance desde el celular @mobile', async ({ page }) => {
 test('el operario no ve compras, costos ni configuración', async ({ page }) => {
   await login(page, 'operario@ositos.demo');
   const nav = page.getByRole('navigation', { name: 'Navegación principal' }).first();
+  // Las secciones del menú se pliegan: se abre la que haga falta.
+  const section = nav.getByRole('button', { name: 'Producción' });
+  if ((await section.getAttribute('aria-expanded')) === 'false') await section.click();
   await expect(nav.getByRole('link', { name: 'Mis tareas' })).toBeVisible();
   await expect(nav.getByRole('link', { name: 'Órdenes de compra' })).toHaveCount(0);
   await expect(nav.getByRole('link', { name: 'Cuentas a pagar' })).toHaveCount(0);

@@ -2,5 +2,9 @@
   "$schema": "https://json.schemastore.org/nest-cli",
   "collection": "@nestjs/schematics",
   "sourceRoot": "src",
-  "compilerOptions": { "deleteOutDir": true, "tsConfigPath": "tsconfig.json" }
+  "compilerOptions": {
+    "deleteOutDir": true,
+    "tsConfigPath": "tsconfig.json",
+    "assets": [{ "include": "assistant/knowledge/*.md", "watchAssets": true }]
+  }
 }

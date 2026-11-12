@@ -54,7 +54,7 @@ export class InventoryQueryService {
           AND (${search}::text IS NULL OR i.sku ILIKE ${search} OR i.name ILIKE ${search} OR i.barcode = ${q.q ?? null})
         GROUP BY i.id, u.code
         HAVING NOT ${q.onlyCritical} OR (i.min_stock IS NOT NULL AND COALESCE(SUM(b.on_hand - b.reserved), 0) < i.min_stock)
-        ORDER BY i.sku
+        ORDER BY i.created_at DESC, i.sku
         LIMIT ${q.pageSize} OFFSET ${(q.page - 1) * q.pageSize}`;
       const total = rows[0] ? Number(rows[0].total) : 0;
       return {

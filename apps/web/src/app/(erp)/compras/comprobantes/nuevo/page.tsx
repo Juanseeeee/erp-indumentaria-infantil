@@ -1,12 +1,12 @@
 'use client';
 
-import { Suspense, useMemo, useRef, useState } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Trash2 } from 'lucide-react';
 import { computeInvoiceTotals, dec } from '@erp/domain-core';
-import { api, ApiError } from '@/lib/api';
+import { api, ApiError, qs } from '@/lib/api';
 import { fmtDate, fmtMoney, fmtQty, todayISO } from '@/lib/format';
 import { Button, Card, Field, Input, PageHeader, Select } from '@/components/ui';
 
@@ -26,12 +26,34 @@ interface Line {
   vatRate: string;
 }
 
+/** Fecha (AAAA-MM-DD) en hora argentina de un instante. */
+const isoDateAR = (d: string) => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Argentina/Buenos_Aires', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(d));
+
 function NewSupplierInvoice() {
   const router = useRouter();
   const params = useSearchParams();
   const [supplierId, setSupplierId] = useState(params.get('proveedor') ?? '');
   const [head, setHead] = useState({ docType: 'FA', pointOfSale: '', number: '', issueDate: todayISO(), dueDate: '', otherTaxes: '0' });
+  // Lo que la persona escribió a mano no se pisa con las sugerencias.
+  const [touched, setTouched] = useState({ number: false, issueDate: false });
+  const [otherPos, setOtherPos] = useState(false);
   const [lines, setLines] = useState<Line[]>([]);
+  const defaults = useQuery({
+    queryKey: ['supplier-invoice-defaults', supplierId, head.docType, head.pointOfSale],
+    queryFn: () =>
+      api.get<{ pointsOfSale: number[]; pointOfSale: number; nextNumber: number | null }>(
+        `/purchasing/invoices/defaults${qs({ supplierId, docType: head.docType, pointOfSale: head.pointOfSale })}`,
+      ),
+  });
+  useEffect(() => {
+    const d = defaults.data;
+    if (!d) return;
+    setHead((h) => ({
+      ...h,
+      pointOfSale: h.pointOfSale || String(d.pointOfSale),
+      number: touched.number ? h.number : d.nextNumber ? String(d.nextNumber) : '',
+    }));
+  }, [defaults.data, touched.number]);
   const key = useRef(crypto.randomUUID());
   const suppliers = useQuery({ queryKey: ['parties', 'suppliers-select'], queryFn: () => api.get<{ rows: { id: string; legalName: string }[] }>('/parties?role=SUPPLIER&pageSize=200') });
   const receipts = useQuery({
@@ -48,7 +70,9 @@ function NewSupplierInvoice() {
     }
   }, [lines, head.otherTaxes]);
 
-  const addReceipt = (r: Receipt) =>
+  const addReceipt = (r: Receipt) => {
+    // La fecha sugerida es la de la recepción; se puede cambiar.
+    if (!touched.issueDate) setHead((h) => ({ ...h, issueDate: isoDateAR(r.receivedAt) }));
     setLines((ls) => [
       ...ls,
       ...r.lines
@@ -62,6 +86,7 @@ function NewSupplierInvoice() {
           vatRate: '21',
         })),
     ]);
+  };
 
   const create = useMutation({
     mutationFn: () =>
@@ -97,9 +122,31 @@ function NewSupplierInvoice() {
             {['FA', 'FB', 'FC', 'NCA', 'NCB', 'NCC', 'NDA', 'NDB', 'NDC'].map((t) => <option key={t}>{t}</option>)}
           </Select>
         </Field>
-        <Field label="Punto de venta" htmlFor="pv"><Input id="pv" inputMode="numeric" value={head.pointOfSale} onChange={(e) => setHead((h) => ({ ...h, pointOfSale: e.target.value.replace(/\D/g, '') }))} /></Field>
-        <Field label="Número" htmlFor="nro"><Input id="nro" inputMode="numeric" value={head.number} onChange={(e) => setHead((h) => ({ ...h, number: e.target.value.replace(/\D/g, '') }))} /></Field>
-        <Field label="Fecha" htmlFor="fd" className="col-span-2"><Input id="fd" type="date" value={head.issueDate} onChange={set('issueDate')} /></Field>
+        <Field label="Punto de venta" htmlFor="pv">
+          {otherPos || (head.pointOfSale !== '' && !defaults.data?.pointsOfSale.includes(Number(head.pointOfSale))) ? (
+            <Input id="pv" inputMode="numeric" value={head.pointOfSale} onChange={(e) => setHead((h) => ({ ...h, pointOfSale: e.target.value.replace(/\D/g, '') }))} />
+          ) : (
+            <Select
+              id="pv"
+              value={head.pointOfSale}
+              onChange={(e) => {
+                if (e.target.value === 'otro') {
+                  setOtherPos(true);
+                  setHead((h) => ({ ...h, pointOfSale: '' }));
+                } else setHead((h) => ({ ...h, pointOfSale: e.target.value }));
+              }}
+            >
+              {(defaults.data?.pointsOfSale ?? [1]).map((p) => <option key={p} value={String(p)}>{String(p).padStart(5, '0')}</option>)}
+              <option value="otro">Otro…</option>
+            </Select>
+          )}
+        </Field>
+        <Field label="Número" htmlFor="nro" hint={!touched.number && defaults.data?.nextNumber ? 'Sigue al último cargado' : undefined}>
+          <Input id="nro" inputMode="numeric" value={head.number} onChange={(e) => { setTouched((t) => ({ ...t, number: true })); setHead((h) => ({ ...h, number: e.target.value.replace(/\D/g, '') })); }} />
+        </Field>
+        <Field label="Fecha" htmlFor="fd" className="col-span-2" hint={!touched.issueDate && lines.some((l) => l.receiptLineId) ? 'La de la recepción' : undefined}>
+          <Input id="fd" type="date" value={head.issueDate} onChange={(e) => { setTouched((t) => ({ ...t, issueDate: true })); set('issueDate')(e); }} />
+        </Field>
         <Field label="Vencimiento" htmlFor="vd" className="col-span-2" hint="Vacío: según condición de pago"><Input id="vd" type="date" value={head.dueDate} onChange={set('dueDate')} /></Field>
         <Field label="Percepciones / otros ($)" htmlFor="ot" className="col-span-2"><Input id="ot" inputMode="decimal" value={head.otherTaxes} onChange={(e) => setHead((h) => ({ ...h, otherTaxes: e.target.value.replace(',', '.') }))} /></Field>
       </Card>

@@ -18,6 +18,7 @@ import {
   CollectionSchema,
   CompanyUpdateSchema,
   PaymentTermSchema,
+  PurchasingPointsOfSaleSchema,
   SettingsService,
   ZoneSchema,
 } from './settings.service';
@@ -55,6 +56,12 @@ export class SettingsController {
   @RequirePermissions('settings.company.edit')
   approvalRule(@Ctx() ctx: RequestContext, @Body(new ZodPipe(ApprovalRuleSchema)) b: z.infer<typeof ApprovalRuleSchema>) {
     return this.settings.upsertApprovalRule(ctx, b);
+  }
+
+  @Put('purchasing-points-of-sale')
+  @RequirePermissions('settings.company.edit')
+  purchasingPointsOfSale(@Ctx() ctx: RequestContext, @Body(new ZodPipe(PurchasingPointsOfSaleSchema)) b: z.infer<typeof PurchasingPointsOfSaleSchema>) {
+    return this.settings.setPurchasingPointsOfSale(ctx, b);
   }
 
   @Post('uoms')
