@@ -78,6 +78,8 @@ export class AssistantService {
   readonly mode: AssistantMode;
 
   readonly model: string;
+  /** Gemini: modelos a probar, en orden, si el anterior está saturado (503), sin cupo (429) o no existe (404). */
+  private geminiModels: string[] = [];
   readonly effort = (process.env.ASSISTANT_EFFORT || 'low') as 'low' | 'medium' | 'high';
   /** Mensajes a la IA por usuario cada 10 minutos (después responde con la guía). */
   private readonly rateLimit = Number(process.env.ASSISTANT_RATE_LIMIT ?? 30);
@@ -100,10 +102,17 @@ export class AssistantService {
         httpOptions: { timeout: 120_000, retryOptions: { attempts: 2, initialDelay: 1 }, ...(baseUrl ? { baseUrl } : {}) },
       });
       this.model = process.env.ASSISTANT_MODEL || 'gemini-3.8-flash';
+      // Cada modelo tiene su propio cupo gratuito y su propia demanda: si uno no responde, se prueba el siguiente.
+      const fallbacks = (process.env.ASSISTANT_FALLBACK_MODELS ?? 'gemini-3.8-flash-lite,gemini-2.5-flash,gemini-2.5-flash-lite')
+        .split(',')
+        .map((m) => m.trim())
+        .filter(Boolean);
+      this.geminiModels = [...new Set([this.model, ...fallbacks])];
     } else {
       this.model = 'guía';
     }
-    this.logger.log(`modo ${this.mode}${this.mode === 'guide' ? ' (sin IA)' : ` · modelo ${this.model}`} · guía de ${this.index.length} secciones`);
+    const models = this.mode === 'gemini' ? this.geminiModels.join(' → ') : this.model;
+    this.logger.log(`modo ${this.mode}${this.mode === 'guide' ? ' (sin IA)' : ` · modelo ${models}`} · guía de ${this.index.length} secciones`);
   }
 
   status() {
@@ -238,18 +247,33 @@ export class AssistantService {
     const systemInstruction = `${INSTRUCTIONS}\n\n# GUÍA DE LA PLATAFORMA\n\n${this.guide}\n\n${await this.userContext(ctx, input.page)}`;
     const contents: Content[] = this.history(input).map((m) => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] }));
     const functionDeclarations = TOOLS.map((t) => ({ name: t.name, description: t.description, parametersJsonSchema: t.input_schema }));
+    const models = [...this.geminiModels];
+    /** Abre el stream con el primer modelo disponible; los que fallan por demanda, cupo o inexistencia se descartan para esta consulta. */
+    const open = async () => {
+      for (;;) {
+        const model = models[0]!;
+        try {
+          return await ai.models.generateContentStream({
+            model,
+            contents,
+            config: {
+              systemInstruction,
+              tools: [{ functionDeclarations }],
+              abortSignal: signal,
+              ...(model.startsWith('gemini-3') ? { thinkingConfig: { thinkingLevel: ThinkingLevel.LOW } } : {}),
+            },
+          });
+        } catch (err) {
+          const status = err instanceof GeminiApiError ? err.status : 0;
+          if (signal.aborted || models.length < 2 || ![404, 429, 500, 503].includes(status)) throw err;
+          this.logger.warn(`gemini ${model} no disponible (${status}); pruebo ${models[1]}`);
+          models.shift();
+        }
+      }
+    };
     try {
       for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
-        const stream = await ai.models.generateContentStream({
-          model: this.model,
-          contents,
-          config: {
-            systemInstruction,
-            tools: [{ functionDeclarations }],
-            abortSignal: signal,
-            ...(this.model.startsWith('gemini-3') ? { thinkingConfig: { thinkingLevel: ThinkingLevel.LOW } } : {}),
-          },
-        });
+        const stream = await open();
         const parts: Part[] = [];
         let finish: string | undefined;
         let usage = '';
@@ -262,7 +286,7 @@ export class AssistantService {
           finish = cand?.finishReason ?? finish;
           if (chunk.usageMetadata) usage = `entrada=${chunk.usageMetadata.promptTokenCount ?? 0} caché=${chunk.usageMetadata.cachedContentTokenCount ?? 0} salida=${chunk.usageMetadata.candidatesTokenCount ?? 0}`;
         }
-        this.logger.log(`gemini usuario=${ctx.userId} ronda=${round} ${usage} fin=${finish}`);
+        this.logger.log(`gemini ${models[0]} usuario=${ctx.userId} ronda=${round} ${usage} fin=${finish}`);
 
         const calls = parts.filter((p) => p.functionCall);
         if (!calls.length) {

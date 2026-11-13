@@ -10,6 +10,8 @@ import { Client, createApp, createMaterial, createTenant, login, opening, Tenant
  */
 type GTurn = { text?: string; call?: { name: string; args: object }; status?: number };
 let script: GTurn[] = [];
+/** Modelos que el servidor falso rechaza (por nombre, según la URL), con el estado HTTP. */
+const unavailable = new Map<string, number>();
 const requests: { url: string; body: Record<string, unknown> }[] = [];
 
 let mock: Server;
@@ -20,7 +22,7 @@ let gAdmin: Client;
 let guideAdmin: Client;
 let guideOperator: Client;
 let openingNumber: string;
-const ENV = ['ANTHROPIC_API_KEY', 'ANTHROPIC_AUTH_TOKEN', 'GEMINI_API_KEY', 'GEMINI_BASE_URL', 'ASSISTANT_PROVIDER', 'ASSISTANT_MODEL'] as const;
+const ENV = ['ANTHROPIC_API_KEY', 'ANTHROPIC_AUTH_TOKEN', 'GEMINI_API_KEY', 'GEMINI_BASE_URL', 'ASSISTANT_PROVIDER', 'ASSISTANT_MODEL', 'ASSISTANT_FALLBACK_MODELS'] as const;
 const saved = Object.fromEntries(ENV.map((k) => [k, process.env[k]]));
 const setEnv = (vars: Partial<Record<(typeof ENV)[number], string>>) => {
   for (const k of ENV) delete process.env[k];
@@ -33,7 +35,8 @@ beforeAll(async () => {
     req.on('data', (c) => (body += c));
     req.on('end', () => {
       requests.push({ url: req.url ?? '', body: JSON.parse(body) });
-      const turn = script.shift() ?? { text: 'Listo.' };
+      const model = /models\/([^:]+):/.exec(req.url ?? '')?.[1] ?? '';
+      const turn = unavailable.has(model) ? { status: unavailable.get(model)! } : (script.shift() ?? { text: 'Listo.' });
       if (turn.status) {
         res.writeHead(turn.status, { 'Content-Type': 'application/json' });
         res.end(JSON.stringify({ error: { code: turn.status, message: 'Quota exceeded', status: 'RESOURCE_EXHAUSTED' } }));
@@ -53,7 +56,12 @@ beforeAll(async () => {
   });
   await new Promise<void>((r) => mock.listen(0, '127.0.0.1', r));
 
-  setEnv({ ASSISTANT_PROVIDER: 'gemini', GEMINI_API_KEY: 'gemini-test', GEMINI_BASE_URL: `http://127.0.0.1:${(mock.address() as AddressInfo).port}` });
+  setEnv({
+    ASSISTANT_PROVIDER: 'gemini',
+    GEMINI_API_KEY: 'gemini-test',
+    GEMINI_BASE_URL: `http://127.0.0.1:${(mock.address() as AddressInfo).port}`,
+    ASSISTANT_FALLBACK_MODELS: 'gemini-respaldo',
+  });
   gemini = await createApp();
   setEnv({});
   guide = await createApp();
@@ -117,13 +125,31 @@ describe('Asistente con Gemini', () => {
     expect(reply!.parts[0]!.functionResponse!.response.result[0]).toMatchObject({ sku: 'INTERLOCK-CEL', fisico: 120 });
   });
 
-  it('con el cupo gratuito agotado responde con la guía', async () => {
-    script = [{ status: 429 }, { status: 429 }, { status: 429 }];
-    const res = await ask(gAdmin, '¿Cómo facturo un remito?').expect(200);
-    const text = textOf(res.body as string);
-    expect(text).toContain('cupo gratuito');
-    expect(text).toContain('Cómo facturar remitos');
-    expect(events(res.body as string).at(-1)!.type).toBe('done');
+  it('si el modelo principal está saturado, responde con el de respaldo', async () => {
+    unavailable.set('gemini-3.8-flash', 503);
+    requests.length = 0;
+    script = [{ text: 'Respuesta del modelo de respaldo.' }];
+    try {
+      const res = await ask(gAdmin, '¿Cómo facturo un remito?').expect(200);
+      expect(textOf(res.body as string)).toBe('Respuesta del modelo de respaldo.');
+      expect(requests.some((r) => r.url.includes('/models/gemini-3.8-flash:'))).toBe(true);
+      expect(requests.at(-1)!.url).toContain('/models/gemini-respaldo:');
+    } finally {
+      unavailable.clear();
+    }
+  });
+
+  it('con el cupo gratuito agotado en todos los modelos responde con la guía', async () => {
+    unavailable.set('gemini-3.8-flash', 429).set('gemini-respaldo', 429);
+    try {
+      const res = await ask(gAdmin, '¿Cómo facturo un remito?').expect(200);
+      const text = textOf(res.body as string);
+      expect(text).toContain('cupo gratuito');
+      expect(text).toContain('Cómo facturar remitos');
+      expect(events(res.body as string).at(-1)!.type).toBe('done');
+    } finally {
+      unavailable.clear();
+    }
   });
 });
 
