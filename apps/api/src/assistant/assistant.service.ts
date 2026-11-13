@@ -431,7 +431,11 @@ function describeGeminiError(err: unknown): string {
 }
 
 /** La guía se arma con los .md de ./knowledge, en orden alfabético (00-plataforma primero). */
+/** En el paquete de Vercel (scripts/bundle.mjs) la guía viaja incrustada en el código. */
+declare const __ERP_GUIDE__: string | undefined;
+
 function loadGuide(): string {
+  if (typeof __ERP_GUIDE__ === 'string') return __ERP_GUIDE__;
   // Compilada (dist/assistant/knowledge, copiada por nest build) o desde el código fuente
   // (src/assistant/knowledge, incluida en la función de Vercel con includeFiles).
   const dir = [join(__dirname, 'knowledge'), join(process.cwd(), 'src/assistant/knowledge'), join(process.cwd(), 'apps/api/src/assistant/knowledge')].find(

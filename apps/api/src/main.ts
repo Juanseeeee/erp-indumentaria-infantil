@@ -1,36 +1,28 @@
-import 'dotenv/config';
-import 'reflect-metadata';
-import { NestFactory } from '@nestjs/core';
-import type { INestApplication } from '@nestjs/common';
-import type { NestExpressApplication } from '@nestjs/platform-express';
-import cookieParser from 'cookie-parser';
-import helmet from 'helmet';
-import { AppModule } from './app.module';
-import { webOrigin } from './common/origin';
+/**
+ * Entrada de la API.
+ *
+ * En Vercel, el empaquetado de la función no incluye las dependencias de un monorepo pnpm (error
+ * «Cannot find module» al arrancar). Por eso el build genera `src/vercel/` con la API completa en un
+ * solo archivo (`scripts/bundle.mjs`) y los dos binarios nativos al lado; este archivo no importa
+ * nada de node_modules y carga ese paquete si existe. En local (node dist/main.js) no existe y se
+ * usa el código compilado normal.
+ */
+import { existsSync } from 'node:fs';
+import { join } from 'node:path';
 
-export function configureApp(app: INestApplication) {
-  app.use(helmet());
-  app.use(cookieParser());
-  // Los extractos bancarios viajan como texto en el cuerpo (hasta 1 MB de CSV).
-  (app as NestExpressApplication).useBodyParser('json', { limit: '2mb' });
-  // El front llega por el mismo origen (proxy de Next en local, ruteo de servicios en Vercel). CORS solo para el origen configurado.
-  app.enableCors({ origin: webOrigin(), credentials: true });
-  app.setGlobalPrefix('api');
-  return app;
-}
+type ServerModule = { bootstrap: () => Promise<void> };
 
-async function bootstrap() {
-  const app = await NestFactory.create(AppModule, { bufferLogs: false });
-  configureApp(app);
-  (app.getHttpAdapter().getInstance() as { set: (k: string, v: unknown) => void }).set('trust proxy', 1);
-  // Vercel asigna el puerto en PORT; en local se usa API_PORT.
-  const port = Number(process.env.PORT ?? process.env.API_PORT ?? 4000);
-  await app.listen(port);
-  console.log(`API escuchando en el puerto ${port} (/api)`);
+function loadServer(): ServerModule {
+  // Solo en Vercel (o forzado con API_BUNDLE=1 para probarlo): en local podría haber un paquete viejo.
+  if ((process.env.VERCEL || process.env.API_BUNDLE === '1') && existsSync(join(__dirname, 'vercel', 'server.cjs'))) {
+    const engine = join(__dirname, 'vercel', 'prisma-query-engine.node');
+    if (!process.env.PRISMA_QUERY_ENGINE_LIBRARY && existsSync(engine)) process.env.PRISMA_QUERY_ENGINE_LIBRARY = engine;
+    return require('./vercel/server.cjs') as ServerModule;
+  }
+  return require('./server') as ServerModule;
 }
 
 // Arranca al ejecutarse directo (node dist/main.js) o en Vercel, que carga este archivo como entrada.
-// Las pruebas lo importan solo por configureApp y no deben levantar el servidor.
 if (require.main === module || process.env.VERCEL) {
-  void bootstrap();
+  void loadServer().bootstrap();
 }

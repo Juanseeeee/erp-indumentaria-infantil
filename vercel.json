@@ -5,10 +5,10 @@
       "root": "apps/api",
       "framework": "nestjs",
       "installCommand": "cd ../.. && pnpm install --frozen-lockfile",
-      "buildCommand": "cd ../.. && pnpm --filter @erp/api run prisma:generate && if [ \"$VERCEL_ENV\" = \"production\" ]; then pnpm --filter @erp/api run prisma:deploy; fi && pnpm turbo run build --filter=@erp/api",
+      "buildCommand": "cd ../.. && pnpm --filter @erp/api run prisma:generate && if [ \"$VERCEL_ENV\" = \"production\" ]; then pnpm --filter @erp/api run prisma:deploy; fi && pnpm turbo run build --filter=@erp/api && pnpm --filter @erp/api run bundle",
       "functions": {
         "src/main.ts": {
-          "includeFiles": "src/assistant/knowledge/**",
+          "includeFiles": "src/vercel/**",
           "maxDuration": 300
         }
       }

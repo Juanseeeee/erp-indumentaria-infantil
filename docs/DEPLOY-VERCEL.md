@@ -46,6 +46,14 @@ llamadas internas entre servicios, por eso no hay *bindings*. De la API solo son
 
    `pgbouncer=true` es obligatorio en el puerto 6543 (Prisma deja de usar *prepared statements*).
 
+   Usá el **Shared Pooler** (host `aws-0-[REGION].pooler.supabase.com`), no el *Dedicated Pooler* ni la
+   conexión directa (host `db.[REF].supabase.co`): esos solo aceptan IPv6 salvo que contrates el add-on de
+   IPv4, y Vercel se conecta por IPv4.
+
+   Son **dos usuarios distintos con contraseñas distintas**: `[PASS_POSTGRES]` es la contraseña de la base
+   que elegiste al crear el proyecto (la que Supabase muestra como `[YOUR-PASSWORD]`); `[PASS_ERP_APP]` es
+   la que inventaste en el `CREATE ROLE` del paso 1.1.
+
 ## 2. Vercel
 
 1. *Add New → Project*, importar el repositorio de GitHub. **Root Directory: la raíz del repositorio**
@@ -100,4 +108,9 @@ cualquier usuario con permiso `alerts.manage` puede evaluar en el momento desde 
   están en la base y no se ven afectadas.
 - **Duración máxima.** Cada pedido a la API puede durar hasta 300 s (`maxDuration`), lo que alcanza para
   reportes y para el asistente en *streaming*.
-- **Archivos de la guía del asistente.** Viajan con la función (`includeFiles`).
+- **La API viaja en un solo archivo.** El empaquetado de Vercel no incluye las dependencias de un
+  monorepo pnpm (la función fallaba con «Cannot find module»). Por eso el build corre
+  `pnpm --filter @erp/api run bundle` (`apps/api/scripts/bundle.mjs`), que genera `apps/api/src/vercel/`:
+  `server.cjs` con toda la API, sus dependencias y la guía del asistente, más los binarios nativos de
+  Prisma y argon2. `src/main.ts` lo carga solo en Vercel. Para probarlo en local, desde una carpeta sin
+  `node_modules`: copiar `dist/main.js` y `src/vercel/`, y ejecutar `API_BUNDLE=1 node main.js`.

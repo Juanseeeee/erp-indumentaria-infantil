@@ -67,7 +67,12 @@ export class UnitOfWork {
           }
           return { value, replayed: false };
         },
-        { isolationLevel: opts.isolationLevel, timeout: opts.timeoutMs ?? 20_000, maxWait: 10_000 },
+        // TX_TIMEOUT_MS: piso para cargas desde lejos de la base (p. ej. el seed contra Supabase desde otra región).
+        {
+          isolationLevel: opts.isolationLevel,
+          timeout: Math.max(opts.timeoutMs ?? 20_000, Number(process.env.TX_TIMEOUT_MS ?? 0)),
+          maxWait: 10_000,
+        },
       );
     } catch (err) {
       // Reintento concurrente con la misma clave: la primera transacción ya confirmó.
