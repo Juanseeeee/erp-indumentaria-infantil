@@ -13,7 +13,7 @@ import { PrismaClient } from '@prisma/client';
 import request from 'supertest';
 import { ALL_PERMISSIONS, PERMISSIONS, PERMISSION_MODULE, SYSTEM_ROLES } from '@erp/contracts';
 import { AppModule } from '../src/app.module';
-import { configureApp } from '../src/server';
+import { configureApp } from '../src/bootstrap';
 import { hashPassword } from '../src/auth/auth.service';
 
 export const PASSWORD = 'Prueba12345';

@@ -1,6 +1,6 @@
 /**
  * Empaqueta la API para Vercel en `src/vercel/` (ver src/main.ts):
- *  - server.cjs: dist/server.js (salida de nest build, con la metadata de decoradores que Nest necesita)
+ *  - server.cjs: dist/bootstrap.js (salida de nest build, con la metadata de decoradores que Nest necesita)
  *    con TODAS las dependencias JS incrustadas, la guía del asistente y las fuentes de pdfkit.
  *  - prisma-query-engine.node y argon2.node: los binarios nativos de la plataforma donde corre el build
  *    (en Vercel, Linux; el build de Vercel corre en el mismo sistema que las funciones).
@@ -70,7 +70,7 @@ const pdfkitPlugin = {
 };
 
 const result = await build({
-  entryPoints: [join(root, 'dist', 'server.js')],
+  entryPoints: [join(root, 'dist', 'bootstrap.js')],
   outfile: join(out, 'server.cjs'),
   bundle: true,
   platform: 'node',
