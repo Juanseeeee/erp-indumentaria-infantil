@@ -1,5 +1,5 @@
 /**
- * Empaqueta la API para Vercel en `src/vercel/` (ver src/main.ts):
+ * Empaqueta la API para Vercel en `dist/vercel/` (ver src/main.ts):
  *  - server.cjs: dist/bootstrap.js (salida de nest build, con la metadata de decoradores que Nest necesita)
  *    con TODAS las dependencias JS incrustadas, la guía del asistente y las fuentes de pdfkit.
  *  - natives.cjs: los binarios nativos (motor de Prisma y argon2) de la plataforma donde corre el build
@@ -16,7 +16,8 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
-const out = join(root, 'src', 'vercel');
+// Vercel publica como función el contenido de dist/ (salida de nest build): el paquete va adentro.
+const out = join(root, 'dist', 'vercel');
 const require = createRequire(join(root, 'package.json'));
 
 rmSync(out, { recursive: true, force: true });
@@ -108,4 +109,4 @@ const left = readFileSync(join(out, 'server.cjs'), 'utf8').match(/__dirname \+ '
 if (left) throw new Error('pdfkit: quedaron lecturas de fuentes sin incrustar');
 if (!existsSync(join(out, 'server.cjs'))) throw new Error('No se generó server.cjs');
 const kb = Object.values(result.metafile.outputs).reduce((s, o) => s + o.bytes, 0) / 1024;
-console.log(`Paquete de Vercel listo en src/vercel (${Math.round(kb)} KB, motor ${engine}, ${argonPkg})`);
+console.log(`Paquete de Vercel listo en dist/vercel (${Math.round(kb)} KB, motor ${engine}, ${argonPkg})`);

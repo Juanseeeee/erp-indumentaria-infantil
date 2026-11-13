@@ -2,7 +2,7 @@
  * Entrada de la API (en Vercel, fijada con `entrypoint` en vercel.json).
  *
  * En Vercel, el empaquetado de la función no incluye las dependencias de un monorepo pnpm (error
- * «Cannot find module» al arrancar) ni archivos sueltos. Por eso el build genera `src/vercel/`
+ * «Cannot find module» al arrancar) ni archivos sueltos. Por eso el build genera `dist/vercel/` (Vercel publica dist/ como función)
  * (`scripts/bundle.mjs`): `server.cjs` con la API completa en un solo archivo y `natives.cjs` con los
  * binarios nativos comprimidos, que acá se extraen a /tmp. Este archivo no importa nada de
  * node_modules. En local (node dist/main.js) se usa el código compilado normal (`bootstrap.ts`).
@@ -55,7 +55,7 @@ function loadServer(): ServerModule {
       extractNatives(require('./vercel/natives.cjs') as Natives);
       return require('./vercel/server.cjs') as ServerModule;
     } catch (err) {
-      console.error('[api] No se pudo cargar el paquete de Vercel (src/vercel):', err);
+      console.error('[api] No se pudo cargar el paquete de Vercel (dist/vercel):', err);
       logLayout();
       throw err;
     }

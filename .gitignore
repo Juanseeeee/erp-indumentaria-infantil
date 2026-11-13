@@ -14,4 +14,3 @@ web.log
 e2e/test-results
 .vercel
 video-demo-erp/
-apps/api/src/vercel/

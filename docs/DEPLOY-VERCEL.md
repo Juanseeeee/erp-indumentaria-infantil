@@ -110,7 +110,9 @@ cualquier usuario con permiso `alerts.manage` puede evaluar en el momento desde 
   reportes y para el asistente en *streaming*.
 - **La API viaja en un solo archivo.** El empaquetado de Vercel no incluye las dependencias de un
   monorepo pnpm (la función fallaba con «Cannot find module»). Por eso el build corre
-  `pnpm --filter @erp/api run bundle` (`apps/api/scripts/bundle.mjs`), que genera `apps/api/src/vercel/`:
-  `server.cjs` con toda la API, sus dependencias y la guía del asistente, más los binarios nativos de
-  Prisma y argon2. `src/main.ts` lo carga solo en Vercel. Para probarlo en local, desde una carpeta sin
-  `node_modules`: copiar `dist/main.js` y `src/vercel/`, y ejecutar `API_BUNDLE=1 node main.js`.
+  `pnpm --filter @erp/api run bundle` (`apps/api/scripts/bundle.mjs`), que genera `apps/api/dist/vercel/`
+  (Vercel publica `dist/` como función): `server.cjs` con toda la API, sus dependencias y la guía del
+  asistente, y `natives.cjs` con los binarios de Prisma y argon2 comprimidos, que `src/main.ts` extrae a
+  `/tmp` al arrancar. El paquete se usa solo en Vercel. Para probarlo en local, desde una carpeta sin
+  `node_modules`: copiar `dist/main.js` y `dist/vercel/`, y ejecutar `API_BUNDLE=1 node main.js`.
+  Si la API no arranca en Vercel, el log de la función muestra el error y los archivos que llegaron.
