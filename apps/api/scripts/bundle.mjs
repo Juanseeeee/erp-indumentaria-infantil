@@ -2,13 +2,15 @@
  * Empaqueta la API para Vercel en `src/vercel/` (ver src/main.ts):
  *  - server.cjs: dist/bootstrap.js (salida de nest build, con la metadata de decoradores que Nest necesita)
  *    con TODAS las dependencias JS incrustadas, la guía del asistente y las fuentes de pdfkit.
- *  - prisma-query-engine.node y argon2.node: los binarios nativos de la plataforma donde corre el build
- *    (en Vercel, Linux; el build de Vercel corre en el mismo sistema que las funciones).
+ *  - natives.cjs: los binarios nativos (motor de Prisma y argon2) de la plataforma donde corre el build
+ *    (en Vercel, Linux, igual que las funciones), comprimidos en base64. src/main.ts los extrae a /tmp al
+ *    arrancar: Vercel no garantiza incluir archivos sueltos (includeFiles) en la función.
  *
  * Uso: después de `nest build`, `node scripts/bundle.mjs`.
  */
 import { build } from 'esbuild';
-import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync } from 'node:fs';
+import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { gzipSync } from 'node:zlib';
 import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -25,14 +27,20 @@ const prismaClientDir = dirname(require.resolve('@prisma/client/package.json'));
 const generatedDir = dirname(createRequire(join(prismaClientDir, 'package.json')).resolve('.prisma/client/default'));
 const engine = readdirSync(generatedDir).find((f) => f.endsWith('.node') && /query_engine/.test(f));
 if (!engine) throw new Error(`No encontré el motor de Prisma en ${generatedDir} (¿falta prisma generate?)`);
-copyFileSync(join(generatedDir, engine), join(out, 'prisma-query-engine.node'));
+const engineBin = readFileSync(join(generatedDir, engine));
 
 const argonDir = dirname(require.resolve('@node-rs/argon2/package.json'));
 const platform = `${process.platform}-${process.arch}`;
 const argonPkg = readdirSync(dirname(argonDir)).find((d) => d.startsWith(`argon2-${platform}`));
 if (!argonPkg) throw new Error(`No encontré el binario de argon2 para ${platform} junto a ${argonDir}`);
 const argonNode = readdirSync(join(dirname(argonDir), argonPkg)).find((f) => f.endsWith('.node'));
-copyFileSync(join(dirname(argonDir), argonPkg, argonNode), join(out, 'argon2.node'));
+const argonBin = readFileSync(join(dirname(argonDir), argonPkg, argonNode));
+const b64 = (buf) => gzipSync(buf, { level: 9 }).toString('base64');
+writeFileSync(
+  join(out, 'natives.cjs'),
+  `// Generado por scripts/bundle.mjs: binarios nativos (gzip + base64) para ${platform}.\n` +
+    `module.exports = ${JSON.stringify({ platform, engine: b64(engineBin), argon2: b64(argonBin) })};\n`,
+);
 
 // ── Guía del asistente (mismo formato que loadGuide) ──
 const kdir = join(root, 'src', 'assistant', 'knowledge');
@@ -42,14 +50,14 @@ const guide = readdirSync(kdir)
   .map((f) => readFileSync(join(kdir, f), 'utf8').trim())
   .join('\n\n---\n\n');
 
-/** @node-rs/argon2 elige el binario con require dinámicos: se reemplaza por el binario copiado al lado. */
+/** @node-rs/argon2 elige el binario con require dinámicos: se reemplaza por el que extrae src/main.ts. */
 const argon2Plugin = {
   name: 'argon2-native',
   setup(b) {
     b.onResolve({ filter: /^@node-rs\/argon2$/ }, () => ({ path: 'argon2-native', namespace: 'argon2-native' }));
     b.onLoad({ filter: /.*/, namespace: 'argon2-native' }, () => ({
       loader: 'js',
-      contents: `module.exports = require(require('node:path').join(__dirname, 'argon2.node'));`,
+      contents: `const p = process.env.ERP_ARGON2_NATIVE; if (!p) throw new Error('Falta ERP_ARGON2_NATIVE (lo define src/main.ts)'); module.exports = require(p);`,
     }));
   },
 };
