@@ -50,7 +50,7 @@ export default function PurchaseOrdersPage() {
       <PageHeader
         title="Órdenes de compra"
         description="Una orden de compra no mueve stock: el stock entra con la recepción."
-        actions={<Can perm="purchasing.order"><LinkButton href="/compras/ordenes/nueva"><Plus className="size-4" /> Nueva orden</LinkButton></Can>}
+        actions={<Can perm="purchasing.order"><LinkButton href="/compras/ordenes/nueva" tour="oc-nueva"><Plus className="size-4" /> Nueva orden</LinkButton></Can>}
       />
       <DataTable
         id="purchase-orders"
@@ -63,7 +63,7 @@ export default function PurchaseOrdersPage() {
         loading={isLoading}
         onRowClick={(r) => router.push(`/compras/ordenes/${r.id}`)}
         toolbar={
-          <Select aria-label="Estado" className="w-56" value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }}>
+          <Select data-tour="oc-filtro-estado" aria-label="Estado" className="w-56" value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }}>
             <option value="PENDING">Pendientes de recibir</option>
             <option value="DRAFT">Pendientes de aprobación</option>
             <option value="RECEIVED">Recibidas</option>

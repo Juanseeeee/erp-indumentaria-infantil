@@ -115,14 +115,14 @@ function NewStockDoc() {
     <div className="max-w-5xl">
       <PageHeader title={`Nuevo: ${DOC_TYPE_LABELS[type]}`} description={DESCRIPTIONS[type]} />
       <Card className="mb-4 grid grid-cols-1 gap-4 p-4 sm:grid-cols-3">
-        <Field label={type === 'TRANSFER' ? 'Depósito origen' : 'Depósito'} htmlFor="wh">
+        <Field label={type === 'TRANSFER' ? 'Depósito origen' : 'Depósito'} htmlFor="wh" tour="stockdoc-nuevo-deposito">
           <Select id="wh" value={warehouseId} onChange={(e) => setWarehouseId(e.target.value)}>
             <option value="">Elegí un depósito…</option>
             {warehouses.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
           </Select>
         </Field>
         {type === 'TRANSFER' && (
-          <Field label="Depósito destino" htmlFor="target">
+          <Field label="Depósito destino" htmlFor="target" tour="stockdoc-nuevo-destino">
             <Select id="target" value={targetWarehouseId} onChange={(e) => setTarget(e.target.value)}>
               <option value="">Elegí el destino…</option>
               {warehouses.filter((w) => w.id !== warehouseId).map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
@@ -130,22 +130,22 @@ function NewStockDoc() {
           </Field>
         )}
         {type === 'ADJUSTMENT' && (
-          <Field label="Motivo" htmlFor="reason">
+          <Field label="Motivo" htmlFor="reason" tour="stockdoc-nuevo-motivo">
             <Select id="reason" value={reason} onChange={(e) => setReason(e.target.value)}>
               <option value="">Elegí un motivo…</option>
               {REASONS.map((r) => <option key={r}>{r}</option>)}
             </Select>
           </Field>
         )}
-        <Field label="Observaciones" htmlFor="notes" className={type === 'OPENING' ? 'sm:col-span-2' : ''}>
+        <Field tour="stockdoc-nuevo-observaciones" label="Observaciones" htmlFor="notes" className={type === 'OPENING' ? 'sm:col-span-2' : ''}>
           <Input id="notes" value={notes} onChange={(e) => setNotes(e.target.value)} />
         </Field>
       </Card>
 
       <Card className="mb-4 p-4">
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <ItemPicker warehouseId={type === 'OPENING' ? undefined : warehouseId || undefined} onPick={(it) => addLine(it)} />
-          <div className="flex items-center gap-2">
+          <ItemPicker tour="stockdoc-nuevo-buscador" warehouseId={type === 'OPENING' ? undefined : warehouseId || undefined} onPick={(it) => addLine(it)} />
+          <div className="flex items-center gap-2" data-tour="stockdoc-nuevo-grilla">
             <Grid3x3 className="size-4 text-muted" aria-hidden />
             <Select aria-label="Cargar por grilla" value={gridProduct} onChange={(e) => setGridProduct(e.target.value)}>
               <option value="">Cargar prendas por grilla talle × color…</option>
@@ -172,7 +172,7 @@ function NewStockDoc() {
         )}
       </Card>
 
-      <Card className="mb-4 overflow-x-auto">
+      <Card className="mb-4 overflow-x-auto" tour="stockdoc-nuevo-lineas">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border bg-surface-2/60 text-xs text-muted uppercase">
@@ -241,6 +241,7 @@ function NewStockDoc() {
 
       <div className="flex items-center gap-2">
         <Button
+          data-tour="stockdoc-nuevo-confirmar"
           loading={submit.isPending}
           disabled={!warehouseId || !validLines.length || (type === 'TRANSFER' && !targetWarehouseId) || (type === 'ADJUSTMENT' && !reason)}
           onClick={() => submit.mutate()}

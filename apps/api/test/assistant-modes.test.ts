@@ -88,7 +88,7 @@ const events = (raw: string) =>
   raw
     .split('\n\n')
     .filter((c) => c.startsWith('data: '))
-    .map((c) => JSON.parse(c.slice(6)) as { type: string; text?: string; label?: string; message?: string });
+    .map((c) => JSON.parse(c.slice(6)) as { type: string; text?: string; label?: string; message?: string; tours?: { id: string; title: string }[] });
 const textOf = (raw: string) => events(raw).filter((e) => e.type === 'text').map((e) => e.text).join('');
 
 const ask = (c: Client, content: string, page = '/') =>
@@ -156,6 +156,16 @@ describe('Asistente con Gemini', () => {
 describe('Asistente en modo guía (sin IA)', () => {
   it('informa el modo', async () => {
     expect((await guideAdmin.get('/assistant/status').expect(200)).body).toEqual({ enabled: true, mode: 'guide' });
+  });
+
+  it('ofrece el recorrido guiado de la tarea, solo si el usuario puede hacerla', async () => {
+    const tours = (raw: string) => events(raw).find((e) => e.type === 'tours')?.tours?.map((t) => t.id) ?? [];
+    const admin = (await ask(guideAdmin, '¿Cómo realizo una venta?').expect(200)).body as string;
+    expect(tours(admin)).toContain('venta-circuito-completo');
+    expect(events(admin).at(-1)!.type).toBe('done');
+    // El operario de planta no vende: no se le ofrece el recorrido.
+    expect(tours((await ask(guideOperator, '¿Cómo realizo una venta?').expect(200)).body as string)).toEqual([]);
+    expect(tours((await ask(guideAdmin, 'hola').expect(200)).body as string)).toEqual([]);
   });
 
   it('responde con la sección de la guía y sugiere otras', async () => {

@@ -66,7 +66,7 @@ export default function CatalogPage() {
         description="Cada modelo genera sus variantes de talle y color, con SKU, código de barras y stock propios."
         actions={
           <Can perm="catalog.create">
-            <LinkButton href="/catalogo/nuevo">
+            <LinkButton href="/catalogo/nuevo" tour="catalogo-nuevo">
               <Plus className="size-4" /> Nuevo modelo
             </LinkButton>
           </Can>
@@ -90,11 +90,11 @@ export default function CatalogPage() {
         onRowClick={(r) => router.push(`/catalogo/${r.id}`)}
         toolbar={
           <>
-            <Select aria-label="Categoría" className="w-44" value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
+            <Select data-tour="catalogo-filtro-categoria" aria-label="Categoría" className="w-44" value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
               <option value="">Todas las categorías</option>
               {md?.categories.filter((c) => c.kind === 'PRODUCT').map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
             </Select>
-            <Select aria-label="Estado" className="w-40" value={status} onChange={(e) => setStatus(e.target.value)}>
+            <Select data-tour="catalogo-filtro-estado" aria-label="Estado" className="w-40" value={status} onChange={(e) => setStatus(e.target.value)}>
               <option value="">Activos y borradores</option>
               <option value="ACTIVE">Activos</option>
               <option value="DRAFT">Borradores</option>

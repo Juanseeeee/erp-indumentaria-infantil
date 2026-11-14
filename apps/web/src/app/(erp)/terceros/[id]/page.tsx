@@ -60,13 +60,14 @@ export default function PartyPage({ params }: { params: Promise<{ id: string }> 
   return (
     <div className="max-w-3xl">
       <PageHeader
+        tour="tercero-encabezado"
         title={data.legalName}
         description={`${data.code} · ${data.roles.map((r) => PARTY_ROLE_LABELS[r]).join(', ')}`}
         actions={
           <>
             {!data.isActive && <Badge>Inactivo</Badge>}
             {can('parties.edit') && (
-              <Button variant="secondary" loading={toggle.isPending} onClick={() => toggle.mutate()}>
+              <Button data-tour="tercero-activar" variant="secondary" loading={toggle.isPending} onClick={() => toggle.mutate()}>
                 {data.isActive ? 'Desactivar' : 'Reactivar'}
               </Button>
             )}
@@ -74,7 +75,7 @@ export default function PartyPage({ params }: { params: Promise<{ id: string }> 
         }
       />
       {workshopWh && (
-        <p className="mb-4 rounded-md bg-accent-soft px-3 py-2 text-sm">
+        <p data-tour="tercero-deposito-taller" className="mb-4 rounded-md bg-accent-soft px-3 py-2 text-sm">
           Depósito del taller: <strong>{workshopWh.name}</strong>.{' '}
           <Link className="text-accent underline" href={`/stock?deposito=${workshopWh.id}`}>Ver lo que tiene en su poder</Link>
         </p>

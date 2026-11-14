@@ -76,7 +76,7 @@ export default function PeriodClosePage() {
         description="Después de cerrar, no se registra ninguna operación con fecha igual o anterior al último día cerrado: cobros, pagos, facturas, gastos, movimientos de caja y banco, cheques ni stock."
       />
 
-      <Card className="mb-4 flex items-center gap-3 p-4">
+      <Card className="mb-4 flex items-center gap-3 p-4" tour="cierre-estado">
         {data.lockedUntil ? <Lock className="size-5 text-accent" aria-hidden /> : <LockOpen className="size-5 text-muted" aria-hidden />}
         <p>
           {data.lockedUntil ? (
@@ -89,7 +89,7 @@ export default function PeriodClosePage() {
 
       <div className="mb-6 grid gap-4 lg:grid-cols-2">
         <Can perm="periods.close">
-          <Card className="p-4">
+          <Card className="p-4" tour="cierre-cerrar">
             <h2 className="mb-3 font-medium">Cerrar</h2>
             {close.error && <ErrorBox error={close.error} />}
             <form
@@ -99,11 +99,11 @@ export default function PeriodClosePage() {
                 close.mutate();
               }}
             >
-              <Field label="Cerrar hasta el día" htmlFor="pc-until" hint="Inclusive. Habitualmente, el último día del mes anterior.">
+              <Field label="Cerrar hasta el día" htmlFor="pc-until" tour="cierre-hasta" hint="Inclusive. Habitualmente, el último día del mes anterior.">
                 <Input id="pc-until" type="date" required max={dayBefore(data.today)} min={data.lockedUntil ? dayAfter(data.lockedUntil) : undefined} value={target} onChange={(e) => setUntil(e.target.value)} />
               </Field>
               {checklist.data && (
-                <ul className="flex flex-col gap-1.5 text-sm" aria-label="Controles antes de cerrar">
+                <ul data-tour="cierre-controles" className="flex flex-col gap-1.5 text-sm" aria-label="Controles antes de cerrar">
                   {checklist.data.checks.map((c) => (
                     <li key={c.key} className="flex items-start gap-2">
                       {c.ok ? <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-success" aria-hidden /> : <TriangleAlert className="mt-0.5 size-4 shrink-0 text-warning" aria-hidden />}
@@ -117,17 +117,17 @@ export default function PeriodClosePage() {
                 </ul>
               )}
               {pending > 0 && <p className="text-sm text-warning">Hay {pending} control{pending > 1 ? 'es' : ''} pendiente{pending > 1 ? 's' : ''}. Se puede cerrar igual, pero conviene resolverlo antes.</p>}
-              <Field label="Observaciones" htmlFor="pc-notes">
+              <Field label="Observaciones" htmlFor="pc-notes" tour="cierre-observaciones">
                 <Textarea id="pc-notes" rows={2} maxLength={500} value={notes} onChange={(e) => setNotes(e.target.value)} />
               </Field>
-              <div><Button type="submit" loading={close.isPending}>Cerrar período</Button></div>
+              <div><Button data-tour="cierre-cerrar-boton" type="submit" loading={close.isPending}>Cerrar período</Button></div>
             </form>
           </Card>
         </Can>
 
         {data.lockedUntil && (
           <Can perm="periods.reopen">
-            <Card className="border-danger/40 p-4">
+            <Card className="border-danger/40 p-4" tour="cierre-reabrir">
               <h2 className="mb-1 font-medium">Reabrir</h2>
               <p className="mb-3 text-sm text-muted">Permite volver a registrar operaciones en días ya cerrados. Queda registrado quién lo hizo y por qué.</p>
               {reopen.error && <ErrorBox error={reopen.error} />}
@@ -138,13 +138,13 @@ export default function PeriodClosePage() {
                   reopen.mutate();
                 }}
               >
-                <Field label="Dejar cerrado hasta el día" htmlFor="pr-until" hint="Vacío reabre todo.">
+                <Field label="Dejar cerrado hasta el día" htmlFor="pr-until" tour="cierre-reabrir-hasta" hint="Vacío reabre todo.">
                   <Input id="pr-until" type="date" max={dayBefore(data.lockedUntil)} value={reopenUntil} onChange={(e) => setReopenUntil(e.target.value)} />
                 </Field>
-                <Field label="Motivo (obligatorio)" htmlFor="pr-reason">
+                <Field label="Motivo (obligatorio)" htmlFor="pr-reason" tour="cierre-reabrir-motivo">
                   <Textarea id="pr-reason" rows={2} required minLength={10} maxLength={500} value={reason} onChange={(e) => setReason(e.target.value)} />
                 </Field>
-                <div><Button type="submit" variant="danger" loading={reopen.isPending} disabled={reason.trim().length < 10}>Reabrir período</Button></div>
+                <div><Button data-tour="cierre-reabrir-boton" type="submit" variant="danger" loading={reopen.isPending} disabled={reason.trim().length < 10}>Reabrir período</Button></div>
               </form>
             </Card>
           </Can>
@@ -152,7 +152,7 @@ export default function PeriodClosePage() {
       </div>
 
       <h2 className="mb-3 font-medium">Historial</h2>
-      <Card className="overflow-hidden">
+      <Card className="overflow-hidden" tour="cierre-historial">
         {data.history.length ? (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">

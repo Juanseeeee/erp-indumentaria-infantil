@@ -46,24 +46,24 @@ export default function DirectReceiptPage() {
     <div className="max-w-5xl">
       <PageHeader title="Compra directa" description="Para compras chicas sin orden de compra. El precio neto de cada línea es el costo con el que entra al stock." />
       <Card className="mb-4 grid grid-cols-1 gap-4 p-4 sm:grid-cols-3">
-        <Field label="Proveedor" htmlFor="sup">
+        <Field label="Proveedor" htmlFor="sup" tour="re-directa-proveedor">
           <Select id="sup" value={supplierId} onChange={(e) => setSupplierId(e.target.value)}>
             <option value="">Elegí…</option>
             {suppliers.data?.rows.map((s) => <option key={s.id} value={s.id}>{s.legalName}</option>)}
           </Select>
         </Field>
-        <Field label="Depósito" htmlFor="wh">
+        <Field label="Depósito" htmlFor="wh" tour="re-directa-deposito">
           <Select id="wh" value={warehouseId} onChange={(e) => setWarehouseId(e.target.value)}>
             <option value="">Elegí…</option>
             {md.warehouses.filter((w) => w.isActive && w.type === 'OWN').map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
           </Select>
         </Field>
-        <Field label="Remito del proveedor" htmlFor="rem"><Input id="rem" value={remito} onChange={(e) => setRemito(e.target.value)} /></Field>
+        <Field label="Remito del proveedor" htmlFor="rem" tour="re-directa-remito"><Input id="rem" value={remito} onChange={(e) => setRemito(e.target.value)} /></Field>
       </Card>
-      <Card className="mb-4">
+      <Card className="mb-4" tour="re-directa-lineas">
         <PurchaseLines lines={lines} setLines={setLines} />
         {lines.length > 0 && (
-          <div className="flex flex-wrap gap-3 border-t border-border p-3">
+          <div data-tour="re-directa-partidas" className="flex flex-wrap gap-3 border-t border-border p-3">
             {lines.map((l) => (
               <label key={l.itemId} className="flex items-center gap-2 text-xs">
                 Partida {l.sku}
@@ -73,7 +73,7 @@ export default function DirectReceiptPage() {
           </div>
         )}
       </Card>
-      <Button disabled={!supplierId || !warehouseId || !lines.length || lines.some((l) => !(Number(l.qty) > 0) || l.unitPrice === '')} loading={create.isPending} onClick={() => create.mutate()}>
+      <Button data-tour="re-directa-registrar" disabled={!supplierId || !warehouseId || !lines.length || lines.some((l) => !(Number(l.qty) > 0) || l.unitPrice === '')} loading={create.isPending} onClick={() => create.mutate()}>
         Registrar recepción
       </Button>
     </div>

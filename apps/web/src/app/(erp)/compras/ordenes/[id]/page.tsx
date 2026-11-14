@@ -91,26 +91,27 @@ export default function PurchaseOrderPage({ params }: { params: Promise<{ id: st
   return (
     <div className="max-w-5xl">
       <PageHeader
+        tour="oc-detalle-encabezado"
         title={`${po.number} · ${po.supplier.legalName}`}
         description={`Emitida ${fmtDate(po.date)} · entrega esperada ${fmtDate(po.expectedAt)} · recibe en ${md?.warehouses.find((w) => w.id === po.warehouseId)?.name ?? ''}`}
         actions={
           <>
             <Badge tone={tone}>{label}</Badge>
-            {po.status === 'DRAFT' && can('purchasing.approve') && po.createdBy !== me?.user.id && <Button loading={approve.isPending} onClick={() => approve.mutate()}>Aprobar</Button>}
+            {po.status === 'DRAFT' && can('purchasing.approve') && po.createdBy !== me?.user.id && <Button data-tour="oc-detalle-aprobar" loading={approve.isPending} onClick={() => approve.mutate()}>Aprobar</Button>}
             {canReceive && !receiving && (
-              <Button onClick={() => { setReceiving(true); setRec(Object.fromEntries(po.lines.map((l) => [l.id, { qty: String(pending(l)), lot: '' }]))); }}>Registrar recepción</Button>
+              <Button data-tour="oc-detalle-recibir" onClick={() => { setReceiving(true); setRec(Object.fromEntries(po.lines.map((l) => [l.id, { qty: String(pending(l)), lot: '' }]))); }}>Registrar recepción</Button>
             )}
             {['DRAFT', 'APPROVED', 'PARTIALLY_RECEIVED'].includes(po.status) && can('purchasing.order') && !cancelling && (
-              <Button variant="ghost" onClick={() => setCancelling(true)}>{po.status === 'PARTIALLY_RECEIVED' ? 'Cerrar pendiente' : 'Cancelar'}</Button>
+              <Button data-tour="oc-detalle-cancelar" variant="ghost" onClick={() => setCancelling(true)}>{po.status === 'PARTIALLY_RECEIVED' ? 'Cerrar pendiente' : 'Cancelar'}</Button>
             )}
           </>
         }
       />
       {po.status === 'DRAFT' && po.createdBy === me?.user.id && (
-        <p className="mb-4 rounded-md bg-warning-soft px-3 py-2 text-sm text-warning">Supera el monto de aprobación: la tiene que aprobar otra persona con permiso.</p>
+        <p data-tour="oc-detalle-aviso-aprobacion" className="mb-4 rounded-md bg-warning-soft px-3 py-2 text-sm text-warning">Supera el monto de aprobación: la tiene que aprobar otra persona con permiso.</p>
       )}
       {cancelling && (
-        <div className="mb-4">
+        <div className="mb-4" data-tour="oc-detalle-motivo">
           <ConfirmPanel
             title={po.status === 'PARTIALLY_RECEIVED' ? 'Cerrar lo pendiente' : `Cancelar ${po.number}`}
             impact={po.status === 'PARTIALLY_RECEIVED' ? 'Lo ya recibido se mantiene; lo pendiente deja de esperarse.' : 'La orden no tiene recepciones; queda cancelada.'}
@@ -124,7 +125,7 @@ export default function PurchaseOrderPage({ params }: { params: Promise<{ id: st
           />
         </div>
       )}
-      <Card className="mb-4 overflow-x-auto">
+      <Card className="mb-4 overflow-x-auto" tour="oc-detalle-lineas">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border bg-surface-2/60 text-xs text-muted uppercase">
@@ -149,13 +150,13 @@ export default function PurchaseOrderPage({ params }: { params: Promise<{ id: st
                 <td className="num px-3 py-2 text-right">{fmtMoney(l.unitPrice)} <span className="text-xs text-muted">+{l.vatRate}%</span></td>
                 {receiving && (
                   <td className="px-3 py-2 text-right">
-                    <Input className="num ml-auto w-24 text-right" inputMode="decimal" aria-label={`Recibir ${item(l.itemId)?.sku}`} value={rec[l.id]?.qty ?? ''} onChange={(e) => setRec((r) => ({ ...r, [l.id]: { ...r[l.id]!, qty: e.target.value.replace(',', '.') } }))} />
+                    <Input data-tour="oc-detalle-recibir-ahora" className="num ml-auto w-24 text-right" inputMode="decimal" aria-label={`Recibir ${item(l.itemId)?.sku}`} value={rec[l.id]?.qty ?? ''} onChange={(e) => setRec((r) => ({ ...r, [l.id]: { ...r[l.id]!, qty: e.target.value.replace(',', '.') } }))} />
                   </td>
                 )}
                 {receiving && (
                   <td className="px-3 py-2">
                     {item(l.itemId)?.trackLots ? (
-                      <Input className="w-28" placeholder="Obligatoria" aria-label={`Partida ${item(l.itemId)?.sku}`} value={rec[l.id]?.lot ?? ''} onChange={(e) => setRec((r) => ({ ...r, [l.id]: { ...r[l.id]!, lot: e.target.value } }))} />
+                      <Input data-tour="oc-detalle-partida" className="w-28" placeholder="Obligatoria" aria-label={`Partida ${item(l.itemId)?.sku}`} value={rec[l.id]?.lot ?? ''} onChange={(e) => setRec((r) => ({ ...r, [l.id]: { ...r[l.id]!, lot: e.target.value } }))} />
                     ) : (
                       <span className="text-xs text-muted">—</span>
                     )}
@@ -168,10 +169,10 @@ export default function PurchaseOrderPage({ params }: { params: Promise<{ id: st
         <p className="num border-t border-border px-3 py-2 text-right text-sm">Neto total {fmtMoney(po.netTotal)}</p>
       </Card>
       {receiving && (
-        <Card className="mb-4 flex flex-wrap items-end gap-3 p-4">
-          <Field label="Remito del proveedor" htmlFor="rem"><Input id="rem" value={remito} onChange={(e) => setRemito(e.target.value)} placeholder="0001-00001234" /></Field>
+        <Card className="mb-4 flex flex-wrap items-end gap-3 p-4" tour="oc-detalle-recepcion">
+          <Field label="Remito del proveedor" htmlFor="rem" tour="oc-detalle-remito"><Input id="rem" value={remito} onChange={(e) => setRemito(e.target.value)} placeholder="0001-00001234" /></Field>
           {shortNow.length > 0 && (
-            <label className="flex max-w-md items-start gap-2 self-center text-sm">
+            <label data-tour="oc-detalle-cerrar-faltante" className="flex max-w-md items-start gap-2 self-center text-sm">
               <input type="checkbox" className="mt-1" checked={closePending} onChange={(e) => setClosePending(e.target.checked)} />
               <span>
                 El proveedor no va a entregar lo que falta: cerrar la orden.
@@ -179,13 +180,13 @@ export default function PurchaseOrderPage({ params }: { params: Promise<{ id: st
               </span>
             </label>
           )}
-          <Button loading={receive.isPending} onClick={() => receive.mutate()}>Confirmar recepción</Button>
+          <Button data-tour="oc-detalle-confirmar-recepcion" loading={receive.isPending} onClick={() => receive.mutate()}>Confirmar recepción</Button>
           <Button variant="secondary" onClick={() => setReceiving(false)}>Cancelar</Button>
           <span className="w-full text-xs text-muted">Cargá en «Recibir ahora» lo que llegó realmente (por ejemplo 2.500 de 3.000). Si el resto va a llegar más adelante, dejá la orden abierta; si no, marcá la casilla. Se tolera hasta un 5 % más de lo pedido.</span>
         </Card>
       )}
       {po.receipts.length > 0 && (
-        <Card className="p-4 text-sm">
+        <Card className="p-4 text-sm" tour="oc-detalle-recepciones">
           <p className="mb-2 font-medium">Recepciones</p>
           {po.receipts.map((r) => <p key={r.id}><Link className="text-accent hover:underline" href={`/compras/recepciones/${r.id}`}>{r.number}</Link> · {fmtDateTime(r.receivedAt)}</p>)}
         </Card>

@@ -50,7 +50,7 @@ const SYNONYMS: Record<string, string[]> = {
   mes: ['period'],
 };
 
-const ENDINGS = ['aciones', 'amientos', 'amiento', 'acion', 'ciones', 'cion', 'iendo', 'ando', 'ados', 'adas', 'ado', 'ada', 'ar', 'er', 'ir', 'es', 'as', 'os', 'a', 'o', 'e', 's'];
+const ENDINGS = ['ieron', 'aron', 'eron', 'aciones', 'amientos', 'amiento', 'acion', 'ciones', 'cion', 'iendo', 'ando', 'ados', 'adas', 'ado', 'ada', 'ar', 'er', 'ir', 'es', 'as', 'os', 'a', 'o', 'e', 's'];
 
 export function normalize(text: string): string {
   return text

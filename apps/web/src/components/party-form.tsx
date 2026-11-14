@@ -43,7 +43,7 @@ export function PartyForm({
           control={form.control}
           name="roles"
           render={({ field }) => (
-            <fieldset>
+            <fieldset data-tour="tercero-form-roles">
               <legend className="mb-2 text-sm font-medium">Es…</legend>
               <div className="flex flex-wrap gap-2">
                 {(['CUSTOMER', 'SUPPLIER', 'WORKSHOP'] as const).map((r) => {
@@ -70,13 +70,13 @@ export function PartyForm({
         />
       </Card>
       <Card className="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2">
-        <Field label="Razón social" htmlFor="legalName" error={err.legalName?.message}>
+        <Field tour="tercero-form-razon-social" label="Razón social" htmlFor="legalName" error={err.legalName?.message}>
           <Input id="legalName" autoFocus {...form.register('legalName')} />
         </Field>
         <Field label="Nombre de fantasía" htmlFor="tradeName">
           <Input id="tradeName" {...form.register('tradeName')} />
         </Field>
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-3 gap-2" data-tour="tercero-form-documento">
           <Field label="Documento" htmlFor="taxIdType">
             <Select id="taxIdType" {...form.register('taxIdType')}>
               <option value="CUIT">CUIT</option>
@@ -89,18 +89,18 @@ export function PartyForm({
             <Input id="taxId" inputMode="numeric" placeholder="30-12345678-9" {...form.register('taxId')} />
           </Field>
         </div>
-        <Field label="Condición fiscal" htmlFor="taxCondition">
+        <Field tour="tercero-form-condicion-fiscal" label="Condición fiscal" htmlFor="taxCondition">
           <Select id="taxCondition" {...form.register('taxCondition')}>
             {Object.entries(TAX_CONDITION_LABELS).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
           </Select>
         </Field>
-        <Field label="Email" htmlFor="email" error={err.email?.message}>
+        <Field tour="tercero-form-email" label="Email" htmlFor="email" error={err.email?.message}>
           <Input id="email" type="email" {...form.register('email')} />
         </Field>
         <Field label="Teléfono" htmlFor="phone">
           <Input id="phone" {...form.register('phone')} />
         </Field>
-        <Field label="Domicilio fiscal" htmlFor="street" className="sm:col-span-2">
+        <Field tour="tercero-form-domicilio" label="Domicilio fiscal" htmlFor="street" className="sm:col-span-2">
           <Input id="street" {...form.register('address.street')} placeholder="Calle y número" />
         </Field>
         <Field label="Localidad" htmlFor="city">
@@ -114,9 +114,9 @@ export function PartyForm({
         </Field>
       </Card>
       {roles.includes('CUSTOMER') && md && (
-        <Card className="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2">
+        <Card className="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2" tour="tercero-form-condiciones">
           <p className="text-sm font-medium sm:col-span-2">Condiciones comerciales</p>
-          <Field label="Condición de pago" htmlFor="pt">
+          <Field tour="tercero-form-condicion-pago" label="Condición de pago" htmlFor="pt">
             <Select id="pt" {...form.register('customer.paymentTermId', nullable)}>
               <option value="">—</option>
               {md.paymentTerms.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
@@ -130,13 +130,13 @@ export function PartyForm({
           </Field>
           {salesEnabled && (
             <>
-              <Field label="Lista de precios" htmlFor="pricelist">
+              <Field tour="tercero-form-lista-precios" label="Lista de precios" htmlFor="pricelist">
                 <Select id="pricelist" {...form.register('customer.priceListId', nullable)}>
                   <option value="">—</option>
                   {lists.data?.filter((l) => l.isActive).map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
                 </Select>
               </Field>
-              <Field label="Vendedor" htmlFor="seller" hint="Cobra comisión sobre lo que se cobre de este cliente">
+              <Field tour="tercero-form-vendedor" label="Vendedor" htmlFor="seller" hint="Cobra comisión sobre lo que se cobre de este cliente">
                 <Select id="seller" {...form.register('customer.sellerUserId', nullable)}>
                   <option value="">—</option>
                   {sellers.data?.map((u) => <option key={u.userId} value={u.userId}>{u.name}</option>)}
@@ -146,10 +146,10 @@ export function PartyForm({
           )}
           {can('parties.credit.view') ? (
             <>
-              <Field label="Límite de crédito ($)" htmlFor="credit" error={err.customer?.creditLimit?.message}>
+              <Field tour="tercero-form-limite-credito" label="Límite de crédito ($)" htmlFor="credit" error={err.customer?.creditLimit?.message}>
                 <Input id="credit" inputMode="decimal" {...form.register('customer.creditLimit', nullable)} />
               </Field>
-              <Field label="Descuento general (%)" htmlFor="disc" error={err.customer?.discountPct?.message}>
+              <Field tour="tercero-form-descuento" label="Descuento general (%)" htmlFor="disc" error={err.customer?.discountPct?.message}>
                 <Input id="disc" inputMode="decimal" {...form.register('customer.discountPct')} />
               </Field>
             </>
@@ -159,7 +159,7 @@ export function PartyForm({
         </Card>
       )}
       <div>
-        <Button type="submit" loading={submitting}>
+        <Button data-tour="tercero-form-guardar" type="submit" loading={submitting}>
           {submitLabel}
         </Button>
       </div>

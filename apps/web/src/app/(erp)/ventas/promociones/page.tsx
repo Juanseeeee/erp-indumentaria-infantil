@@ -86,7 +86,7 @@ export default function PromotionsPage() {
       <PageHeader
         title="Promociones"
         description="Descuentos con vigencia, por volumen o por modelo, categoría o colección. En cada línea del pedido rige el mejor entre el descuento del cliente y la promoción: no se suman."
-        actions={manage && !editing ? <Button onClick={() => setEditing({ id: null, form: empty() })}><Plus className="size-4" aria-hidden /> Nueva promoción</Button> : undefined}
+        actions={manage && !editing ? <Button data-tour="promociones-nueva" onClick={() => setEditing({ id: null, form: empty() })}><Plus className="size-4" aria-hidden /> Nueva promoción</Button> : undefined}
       />
       {editing && (
         <PromotionForm
@@ -105,7 +105,7 @@ export default function PromotionsPage() {
           <EmptyState icon={<BadgePercent className="size-8" aria-hidden />} title="Sin promociones" description="Creá una para que los pedidos la tomen solos mientras esté vigente." />
         </Card>
       ) : (
-        <ul className="flex flex-col gap-2" aria-label="Promociones">
+        <ul className="flex flex-col gap-2" aria-label="Promociones" data-tour="promociones-lista">
           {data.map((p) => {
             const [label, tone] = STATUS[p.status];
             return (
@@ -184,38 +184,38 @@ function PromotionForm({ id, initial, onDone }: { id: string | null; initial: Fo
   }
 
   return (
-    <Card className="mb-4 p-4">
+    <Card className="mb-4 p-4" tour="promocion-form">
       <form onSubmit={submit} aria-label={id ? 'Editar promoción' : 'Nueva promoción'}>
         <h2 className="mb-3 font-medium">{id ? 'Editar promoción' : 'Nueva promoción'}</h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <Field label="Nombre (se ve en el pedido)" htmlFor="pr-name" className="sm:col-span-2">
+          <Field label="Nombre (se ve en el pedido)" htmlFor="pr-name" className="sm:col-span-2" tour="promocion-form-nombre">
             <Input id="pr-name" required value={f.name} onChange={set('name')} placeholder="Ej.: 12 bodies, 12 % off" />
           </Field>
-          <Field label="Descuento %" htmlFor="pr-pct">
+          <Field label="Descuento %" htmlFor="pr-pct" tour="promocion-form-descuento">
             <Input id="pr-pct" required inputMode="decimal" value={f.discountPct} onChange={(e) => setF((x) => ({ ...x, discountPct: e.target.value.replace(',', '.') }))} />
           </Field>
-          <Field label="Mínimo de unidades por pedido" htmlFor="pr-min" hint="0 = sin mínimo">
+          <Field tour="promocion-form-minimo" label="Mínimo de unidades por pedido" htmlFor="pr-min" hint="0 = sin mínimo">
             <Input id="pr-min" inputMode="numeric" value={f.minQty} onChange={set('minQty')} />
           </Field>
-          <Field label="Vigente desde" htmlFor="pr-from">
+          <Field label="Vigente desde" htmlFor="pr-from" tour="promocion-form-desde">
             <Input id="pr-from" type="date" required value={f.validFrom} onChange={set('validFrom')} />
           </Field>
-          <Field label="Hasta (inclusive)" htmlFor="pr-to" hint="Vacío = sin vencimiento">
+          <Field tour="promocion-form-hasta" label="Hasta (inclusive)" htmlFor="pr-to" hint="Vacío = sin vencimiento">
             <Input id="pr-to" type="date" min={f.validFrom} value={f.validTo} onChange={set('validTo')} />
           </Field>
-          <Field label="Aplica a" htmlFor="pr-scope">
+          <Field label="Aplica a" htmlFor="pr-scope" tour="promocion-form-alcance">
             <Select id="pr-scope" value={f.scope} onChange={(e) => setF((x) => ({ ...x, scope: e.target.value as PromotionScopeCode, targetIds: [] }))}>
               {PROMOTION_SCOPES.map((s) => <option key={s} value={s}>{PROMOTION_SCOPE_LABELS[s]}</option>)}
             </Select>
           </Field>
-          <label className="flex items-center gap-2 self-end pb-2 text-sm">
+          <label className="flex items-center gap-2 self-end pb-2 text-sm" data-tour="promocion-form-activa">
             <input type="checkbox" checked={f.isActive} onChange={(e) => setF((x) => ({ ...x, isActive: e.target.checked }))} /> Activa
           </label>
         </div>
         {f.scope !== 'ALL' && (
           <CheckList title={PROMOTION_SCOPE_LABELS[f.scope]} options={targets} value={f.targetIds} onChange={(v) => setF((x) => ({ ...x, targetIds: v }))} loading={f.scope === 'PRODUCTS' && products.isLoading} />
         )}
-        <div className="mt-4 grid gap-4 lg:grid-cols-2">
+        <div className="mt-4 grid gap-4 lg:grid-cols-2" data-tour="promocion-form-restricciones">
           <CheckList
             title="Solo para estos clientes (opcional)"
             options={(customers.data?.rows ?? []).map((c) => ({ id: c.id, label: c.legalName }))}
@@ -235,7 +235,7 @@ function PromotionForm({ id, initial, onDone }: { id: string | null; initial: Fo
           <Textarea id="pr-notes" rows={2} value={f.notes} onChange={set('notes')} />
         </Field>
         <div className="mt-4 flex gap-2">
-          <Button type="submit" loading={save.isPending}>{id ? 'Guardar' : 'Crear promoción'}</Button>
+          <Button data-tour="promocion-form-guardar" type="submit" loading={save.isPending}>{id ? 'Guardar' : 'Crear promoción'}</Button>
           <Button type="button" variant="secondary" onClick={onDone}>Cancelar</Button>
         </div>
       </form>

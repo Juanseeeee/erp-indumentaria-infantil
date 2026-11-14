@@ -58,10 +58,10 @@ export default function RolesPage() {
       <PageHeader
         title="Roles y permisos"
         description="Los permisos se validan siempre en el servidor. Ocultar un botón no alcanza: si el rol no tiene el permiso, la operación se rechaza."
-        actions={editable && <Button onClick={() => setDraft({ code: '', name: '', permissions: [] })}>Nuevo rol</Button>}
+        actions={editable && <Button onClick={() => setDraft({ code: '', name: '', permissions: [] })} data-tour="roles-nuevo">Nuevo rol</Button>}
       />
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[260px_1fr]">
-        <Card>
+        <Card tour="roles-lista">
           <ul>
             {data.roles.map((r) => (
               <li key={r.id}>
@@ -79,7 +79,7 @@ export default function RolesPage() {
             ))}
           </ul>
         </Card>
-        <Card className="p-4">
+        <Card className="p-4" tour="roles-editor">
           {!current ? (
             <p className="text-sm text-muted">Elegí un rol para ver sus permisos.</p>
           ) : (
@@ -123,17 +123,17 @@ function RoleEditor({
     <div>
       <div className="mb-4 flex flex-wrap items-end gap-3">
         {isNew && (
-          <Field label="Código" htmlFor="rcode" hint="Ej.: CORTE">
+          <Field label="Código" htmlFor="rcode" hint="Ej.: CORTE" tour="roles-codigo">
             <Input id="rcode" value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} className="w-36" />
           </Field>
         )}
-        <Field label="Nombre" htmlFor="rname">
+        <Field label="Nombre" htmlFor="rname" tour="roles-nombre">
           <Input id="rname" value={name} onChange={(e) => setName(e.target.value)} disabled={!editable} />
         </Field>
         {role.isSystem && <Badge tone="accent">Rol inicial</Badge>}
         {!editable && role.code === 'SUPERADMIN' && <Badge>No editable</Badge>}
       </div>
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2" data-tour="roles-permisos">
         {byModule.map(([module, list]) => (
           <fieldset key={module} className="rounded-md border border-border p-3">
             <legend className="px-1 text-sm font-medium">{MODULE_LABELS[module] ?? module}</legend>
@@ -150,7 +150,7 @@ function RoleEditor({
         ))}
       </div>
       {editable && (
-        <Button className="mt-4" loading={saving} disabled={!name || !code} onClick={() => onSave({ code, name, permissions: [...perms] })}>
+        <Button className="mt-4" data-tour="roles-guardar" loading={saving} disabled={!name || !code} onClick={() => onSave({ code, name, permissions: [...perms] })}>
           Guardar rol
         </Button>
       )}

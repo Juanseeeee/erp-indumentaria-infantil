@@ -26,15 +26,15 @@ export default function ReceiptsPage() {
       <PageHeader
         title="Recepciones"
         description="Lo único que hace entrar stock de compras. Para recibir contra una orden de compra, entrá a la orden."
-        actions={<Can perm="purchasing.receive"><LinkButton href="/compras/recepciones/nueva" variant="secondary"><Plus className="size-4" /> Compra directa (sin OC)</LinkButton></Can>}
+        actions={<Can perm="purchasing.receive"><LinkButton href="/compras/recepciones/nueva" variant="secondary" tour="re-compra-directa"><Plus className="size-4" /> Compra directa (sin OC)</LinkButton></Can>}
       />
-      <Card>
+      <Card tour="re-lista">
         <ul>
           {data?.map((r) => {
             const invoiced = r.lines.every((l) => Number(l.invoicedQty) >= Number(l.qty));
             return (
               <li key={r.id} className="border-b border-border last:border-0">
-                <Link href={`/compras/recepciones/${r.id}`} className="flex justify-between gap-3 px-4 py-3 text-sm hover:bg-surface-2">
+                <Link data-tour="re-recepcion" href={`/compras/recepciones/${r.id}`} className="flex justify-between gap-3 px-4 py-3 text-sm hover:bg-surface-2">
                   <span>
                     <strong>{r.number}</strong> · {r.parties.find((p) => p.id === r.supplierId)?.legalName}
                     <span className="block text-xs text-muted">{fmtDateTime(r.receivedAt)}{r.supplierDeliveryNote && ` · remito ${r.supplierDeliveryNote}`}{!r.purchaseOrderId && ' · sin OC'}</span>

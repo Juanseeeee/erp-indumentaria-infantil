@@ -1,5 +1,12 @@
 import { expect, test, type Page } from '@playwright/test';
 
+/** El menú lateral tiene secciones plegables: se abre la sección antes de tocar un enlace. */
+async function openSection(page: Page, title: string) {
+  const section = page.getByRole('navigation', { name: 'Navegación principal' }).getByRole('button', { name: title });
+  if ((await section.getAttribute('aria-expanded')) === 'false') await section.click();
+}
+
+
 const PASSWORD = 'Demo2026erp';
 
 /** Hace 90 días (AAAA-MM-DD): los datos demo tienen ventas en ese rango, sea cual sea el mes en curso. */
@@ -38,6 +45,7 @@ test('Ventas no ve el tablero de Dirección', async ({ page }) => {
 
 test('Administración analiza la rentabilidad por modelo y por cliente', async ({ page }) => {
   await login(page, 'administracion@ositos.demo');
+  await openSection(page, 'Análisis');
   await page.getByRole('link', { name: 'Rentabilidad' }).click();
   await expect(page.getByRole('heading', { name: 'Rentabilidad' })).toBeVisible();
   for (const label of ['Vendido neto', 'Costo de lo vendido', 'Margen bruto estimado']) await expect(page.getByText(label, { exact: true }).first()).toBeVisible();
@@ -70,6 +78,7 @@ test('Ventas y Producción no ven la rentabilidad', async ({ page }) => {
 
 test('Administración consulta un reporte y lo descarga en Excel y PDF', async ({ page }) => {
   await login(page, 'administracion@ositos.demo');
+  await openSection(page, 'Análisis');
   await page.getByRole('link', { name: 'Reportes', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Reportes', exact: true })).toBeVisible();
   await expect(page.getByRole('region', { name: 'Tesorería' })).toBeVisible();
@@ -143,6 +152,7 @@ test('Producción ve sus alertas en la campana y va a la operación', async ({ p
 
 test('Administración gestiona promociones: vigentes, validación y edición', async ({ page }) => {
   await login(page, 'administracion@ositos.demo');
+  await openSection(page, 'Ventas');
   await page.getByRole('link', { name: 'Promociones' }).click();
   const bodies = page.getByRole('article', { name: 'Bodies por 12 o más' });
   await expect(bodies.getByText('Vigente')).toBeVisible();

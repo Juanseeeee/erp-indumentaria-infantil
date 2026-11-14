@@ -81,8 +81,9 @@ export function DataTable<T>({
 
   const pages = total && pageSize ? Math.max(1, Math.ceil(total / pageSize)) : 1;
 
+  // Anclas de los recorridos guiados: table-<id>, table-<id>-search, table-<id>-columns, table-<id>-first-row.
   return (
-    <Card>
+    <Card tour={`table-${id}`}>
       <div className="flex flex-wrap items-center gap-2 border-b border-border p-3">
         {onSearchChange && (
           <div className="relative min-w-56 flex-1">
@@ -90,6 +91,7 @@ export function DataTable<T>({
             <Input
               aria-label="Buscar"
               data-table-search
+              data-tour={`table-${id}-search`}
               className="pl-8"
               placeholder={searchPlaceholder}
               value={search}
@@ -99,7 +101,7 @@ export function DataTable<T>({
         )}
         {toolbar}
         <div className="relative ml-auto">
-          <Button variant="ghost" size="sm" onClick={() => setShowColumns((v) => !v)} aria-expanded={showColumns}>
+          <Button variant="ghost" size="sm" data-tour={`table-${id}-columns`} onClick={() => setShowColumns((v) => !v)} aria-expanded={showColumns}>
             <Columns3 className="size-4" aria-hidden /> Columnas
           </Button>
           {showColumns && (
@@ -134,9 +136,10 @@ export function DataTable<T>({
             ))}
           </thead>
           <tbody>
-            {table.getRowModel().rows.map((row) => (
+            {table.getRowModel().rows.map((row, idx) => (
               <tr
                 key={row.id}
+                data-tour={idx === 0 ? `table-${id}-first-row` : undefined}
                 onClick={onRowClick ? () => onRowClick(row.original) : undefined}
                 className={cn('border-b border-border last:border-0', onRowClick && 'cursor-pointer hover:bg-surface-2')}
               >

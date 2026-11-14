@@ -25,9 +25,9 @@ export default function PayableLedgerPage({ params }: { params: Promise<{ partyI
       <PageHeader
         title={`Cuenta corriente · ${data.party?.legalName}`}
         description={`Saldo: ${fmtMoney(data.balance)}`}
-        actions={<Can perm="payables.pay"><LinkButton href={`/pagos/nuevo?proveedor=${partyId}`}>Pagar</LinkButton></Can>}
+        actions={<Can perm="payables.pay"><LinkButton href={`/pagos/nuevo?proveedor=${partyId}`} tour="cxp-pagar">Pagar</LinkButton></Can>}
       />
-      <Card className="overflow-x-auto">
+      <Card className="overflow-x-auto" tour="cxp-cuenta-corriente">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border bg-surface-2/60 text-xs text-muted uppercase">

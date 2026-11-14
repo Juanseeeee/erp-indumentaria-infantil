@@ -25,7 +25,7 @@ export default function PayablesPage() {
       {!data?.length ? (
         <Card><EmptyState icon={<Landmark className="size-8" />} title="Sin deudas registradas" description="Las facturas de proveedores y las liquidaciones de talleres aparecen acá." /></Card>
       ) : (
-        <Card className="overflow-x-auto">
+        <Card className="overflow-x-auto" tour="cxp-saldos">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-surface-2/60 text-xs text-muted uppercase">
@@ -38,7 +38,7 @@ export default function PayablesPage() {
             <tbody>
               {data.map((r) => (
                 <tr key={r.party_id} className="border-b border-border last:border-0">
-                  <td className="px-3 py-2"><Link className="hover:underline" href={`/cuentas-a-pagar/${r.party_id}`}>{r.legal_name}</Link> <span className="text-xs text-muted">{r.code}</span></td>
+                  <td className="px-3 py-2"><Link data-tour="cxp-proveedor" className="hover:underline" href={`/cuentas-a-pagar/${r.party_id}`}>{r.legal_name}</Link> <span className="text-xs text-muted">{r.code}</span></td>
                   <td className="num px-3 py-2 text-right font-medium">{fmtMoney(r.balance)}</td>
                   <td className={`num px-3 py-2 text-right ${isZero(r.overdue) ? 'text-muted' : 'text-danger'}`}>{fmtMoney(r.overdue)}</td>
                   <td className="px-3 py-2 text-right">{fmtDate(r.next_due)}</td>

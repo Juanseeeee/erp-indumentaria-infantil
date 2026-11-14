@@ -97,14 +97,14 @@ export default function TechSheetPage({ params }: { params: Promise<{ productId:
         actions={
           can('techsheets.edit') && !editing && (
             <>
-              <Button variant="secondary" onClick={() => setEditing(true)}>{draft ? 'Editar borrador' : active ? 'Nueva versión' : 'Cargar ficha'}</Button>
-              {draft && <Button loading={activate.isPending} onClick={() => activate.mutate()}>Activar v{draft.versionNo}</Button>}
+              <Button data-tour="ficha-editar" variant="secondary" onClick={() => setEditing(true)}>{draft ? 'Editar borrador' : active ? 'Nueva versión' : 'Cargar ficha'}</Button>
+              {draft && <Button data-tour="ficha-activar" loading={activate.isPending} onClick={() => activate.mutate()}>Activar v{draft.versionNo}</Button>}
             </>
           )
         }
       />
       {versions.length > 0 && (
-        <div className="mb-4 flex flex-wrap gap-2 text-xs">
+        <div data-tour="ficha-versiones" className="mb-4 flex flex-wrap gap-2 text-xs">
           {versions.map((v) => (
             <Badge key={v.id} tone={v.status === 'ACTIVE' ? 'success' : v.status === 'DRAFT' ? 'warning' : 'neutral'}>
               v{v.versionNo} · {v.status === 'ACTIVE' ? 'vigente' : v.status === 'DRAFT' ? 'borrador' : 'archivada'}
@@ -113,7 +113,7 @@ export default function TechSheetPage({ params }: { params: Promise<{ productId:
         </div>
       )}
 
-      <Card className="mb-4 overflow-x-auto">
+      <Card className="mb-4 overflow-x-auto" tour="ficha-materiales">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border bg-surface-2/60 text-xs text-muted uppercase">
@@ -207,14 +207,14 @@ export default function TechSheetPage({ params }: { params: Promise<{ productId:
         {!shown.length && <p className="p-6 text-center text-sm text-muted">La ficha todavía no tiene materiales.</p>}
         {editable && (
           <div className="border-t border-border p-3">
-            <Button size="sm" variant="secondary" onClick={() => setLines((ls) => [...ls, empty()])}><Plus className="size-4" /> Agregar material</Button>
+            <Button data-tour="ficha-agregar-material" size="sm" variant="secondary" onClick={() => setLines((ls) => [...ls, empty()])}><Plus className="size-4" /> Agregar material</Button>
             <span className="ml-3 text-xs text-muted">Consumo por prenda en la unidad de stock del material. Los casilleros por talle vacíos usan el consumo base.</span>
           </div>
         )}
       </Card>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <Card className="p-4">
+        <Card className="p-4" tour="ficha-etapas">
           <h2 className="mb-2 font-medium">Recorrido de etapas</h2>
           {editable ? (
             <>
@@ -239,7 +239,7 @@ export default function TechSheetPage({ params }: { params: Promise<{ productId:
             <p className="text-sm">{stageIds.length ? stageIds.map(stageName).join(' → ') : 'Todas las etapas activas.'}</p>
           )}
         </Card>
-        <Card className="p-4">
+        <Card className="p-4" tour="ficha-instrucciones">
           <h2 className="mb-2 font-medium">Instrucciones</h2>
           {editable ? <Textarea value={instructions} onChange={(e) => setInstructions(e.target.value)} rows={5} /> : <p className="text-sm whitespace-pre-wrap text-muted">{instructions || '—'}</p>}
         </Card>
@@ -247,13 +247,13 @@ export default function TechSheetPage({ params }: { params: Promise<{ productId:
 
       {editing && (
         <div className="mt-4 flex gap-2">
-          <Button loading={save.isPending} onClick={() => save.mutate()}>Guardar borrador</Button>
+          <Button data-tour="ficha-guardar" loading={save.isPending} onClick={() => save.mutate()}>Guardar borrador</Button>
           <Button variant="secondary" onClick={() => setEditing(false)}>Descartar cambios</Button>
         </div>
       )}
 
       {data.estimate && can('costs.view') && (
-        <Card className="mt-6 overflow-x-auto">
+        <Card className="mt-6 overflow-x-auto" tour="ficha-costo">
           <h2 className="border-b border-border px-4 py-3 font-medium">Costo estimado de materiales por prenda (versión vigente)</h2>
           {data.estimate.missingCostItemIds.length > 0 && (
             <p className="px-4 pt-3 text-xs text-warning">Hay materiales sin costo cargado: el estimado está incompleto.</p>

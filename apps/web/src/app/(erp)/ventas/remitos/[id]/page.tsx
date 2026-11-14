@@ -53,11 +53,11 @@ export default function DeliveryPage({ params }: { params: Promise<{ id: string 
         {d.status === 'VOIDED' ? <Badge tone="danger">Anulado: {d.voidReason}</Badge> : d.invoice ? (
           <Link href={`/ventas/comprobantes/${d.invoice.id}`}><Badge tone="success">Facturado en {fmtFiscal(d.invoice)}</Badge></Link>
         ) : <Badge tone="warning">Sin facturar</Badge>}
-        <div className="ml-auto flex gap-2">
+        <div className="ml-auto flex gap-2" data-tour="remito-detalle-acciones">
           {d.status === 'ISSUED' && !d.invoice && (
             <>
-              <Can perm="sales.invoice"><LinkButton href={`/ventas/comprobantes/nuevo?cliente=${d.customer?.id}&remito=${d.id}`}>Facturar</LinkButton></Can>
-              <Can perm="sales.deliver"><Button variant="secondary" onClick={() => setVoiding(true)}>Anular</Button></Can>
+              <Can perm="sales.invoice"><LinkButton href={`/ventas/comprobantes/nuevo?cliente=${d.customer?.id}&remito=${d.id}`} tour="remito-detalle-facturar">Facturar</LinkButton></Can>
+              <Can perm="sales.deliver"><Button data-tour="remito-detalle-anular" variant="secondary" onClick={() => setVoiding(true)}>Anular</Button></Can>
             </>
           )}
           <PrintButton />
@@ -78,7 +78,7 @@ export default function DeliveryPage({ params }: { params: Promise<{ id: string 
           />
         </div>
       )}
-      <Card className="p-6">
+      <Card className="p-6" tour="remito-detalle-documento">
         <DocHeader company={d.company} title="Remito" number={d.number} meta={<p className="text-muted">Fecha {fmtDate(d.issueDate)}</p>} />
         <p className="mt-1 text-right text-xs text-muted">Documento no válido como factura</p>
         <div className="my-4 grid gap-2 text-sm sm:grid-cols-2">

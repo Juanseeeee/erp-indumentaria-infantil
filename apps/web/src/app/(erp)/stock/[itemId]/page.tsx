@@ -63,6 +63,7 @@ export default function ItemStockPage({ params }: { params: Promise<{ itemId: st
   return (
     <div>
       <PageHeader
+        tour="stockitem-encabezado"
         title={item.name}
         description={`${item.sku}${item.barcode ? ` · ${item.barcode}` : ''} · unidad: ${item.uom}${item.minStock ? ` · mínimo ${fmtQty(item.minStock)}` : ''}`}
         actions={
@@ -73,7 +74,7 @@ export default function ItemStockPage({ params }: { params: Promise<{ itemId: st
           )
         }
       />
-      <Card className="mb-4 overflow-x-auto">
+      <Card className="mb-4 overflow-x-auto" tour="stockitem-saldos">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border bg-surface-2/60 text-xs text-muted uppercase">
@@ -108,12 +109,12 @@ export default function ItemStockPage({ params }: { params: Promise<{ itemId: st
 
       <div className="mb-2 flex items-center justify-between">
         <h2 className="font-medium">Kardex</h2>
-        <Select aria-label="Depósito" className="w-56" value={warehouseId} onChange={(e) => setWarehouseId(e.target.value)}>
+        <Select data-tour="stockitem-kardex-deposito" aria-label="Depósito" className="w-56" value={warehouseId} onChange={(e) => setWarehouseId(e.target.value)}>
           <option value="">Todos los depósitos</option>
           {md?.warehouses.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
         </Select>
       </div>
-      <Card className="overflow-x-auto">
+      <Card className="overflow-x-auto" tour="stockitem-kardex">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border bg-surface-2/60 text-xs text-muted uppercase">

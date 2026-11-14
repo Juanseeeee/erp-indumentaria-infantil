@@ -43,7 +43,7 @@ export default function MaterialPage({ params }: { params: Promise<{ id: string 
       <PageHeader
         title={data.item.name}
         description={data.item.sku}
-        actions={<LinkButton variant="secondary" href={`/stock/${id}`}>Ver stock y kardex</LinkButton>}
+        actions={<LinkButton variant="secondary" href={`/stock/${id}`} tour="material-ver-stock">Ver stock y kardex</LinkButton>}
       />
       {can('materials.edit') ? (
         <MaterialForm

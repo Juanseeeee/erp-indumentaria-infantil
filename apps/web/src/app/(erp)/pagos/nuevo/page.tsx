@@ -142,21 +142,22 @@ function NewPayment() {
     <div className="max-w-6xl">
       <PageHeader title="Nueva orden de pago" description="Elegí qué facturas se pagan y con qué medios. Lo que no se impute queda como anticipo al proveedor." />
       <Card className="mb-4 grid gap-4 p-4 sm:grid-cols-3">
-        <Field label="Proveedor o taller" htmlFor="supplier" className="sm:col-span-2">
+        <Field label="Proveedor o taller" htmlFor="supplier" className="sm:col-span-2" tour="op-nueva-proveedor">
           <Select id="supplier" value={supplierId} onChange={(e) => { setSupplierId(e.target.value); setAlloc({}); }}>
             <option value="">Elegí un proveedor…</option>
             {suppliers.data?.map((s) => <option key={s.id} value={s.id}>{s.legalName}</option>)}
           </Select>
         </Field>
-        <Field label="Fecha" htmlFor="date"><Input id="date" type="date" value={date} onChange={(e) => setDate(e.target.value)} /></Field>
+        <Field label="Fecha" htmlFor="date" tour="op-nueva-fecha"><Input id="date" type="date" value={date} onChange={(e) => setDate(e.target.value)} /></Field>
       </Card>
 
       {supplierId && (
         <div className="grid gap-4 lg:grid-cols-2">
-          <Card className="p-4">
+          <Card className="p-4" tour="op-nueva-comprobantes">
             <div className="mb-2 flex items-center justify-between gap-2">
               <p className="font-medium">Comprobantes a pagar</p>
               <Button
+                data-tour="op-nueva-pagar-todo"
                 variant="secondary"
                 disabled={!open.data?.debits.length}
                 onClick={() => setAlloc(Object.fromEntries((open.data?.debits ?? []).map((d) => [d.id, d.openAmount])))}
@@ -184,6 +185,7 @@ function NewPayment() {
                       <td className="num py-1.5 text-right">{fmtMoney(e.openAmount)}</td>
                       <td className="w-32 py-1 pl-2">
                         <Input
+                          data-tour="op-nueva-pagar-monto"
                           aria-label={`Pagar ${e.description}`}
                           className="num h-8 text-right"
                           inputMode="decimal"
@@ -197,16 +199,16 @@ function NewPayment() {
               </table>
             )}
             {total.gt(0) && !!open.data?.debits.length && (
-              <Button variant="ghost" className="mt-2" onClick={() => setAlloc(Object.fromEntries(suggestAllocation(open.data!.debits, total).map((x) => [x.id, x.amount.toFixed(2)])))}>
+              <Button data-tour="op-nueva-imputar-vencimiento" variant="ghost" className="mt-2" onClick={() => setAlloc(Object.fromEntries(suggestAllocation(open.data!.debits, total).map((x) => [x.id, x.amount.toFixed(2)])))}>
                 Imputar el total por vencimiento
               </Button>
             )}
           </Card>
 
-          <Card className="p-4">
+          <Card className="p-4" tour="op-nueva-medios">
             <div className="mb-2 flex items-center justify-between gap-2">
               <p className="font-medium">Medios de pago</p>
-              <Button variant="secondary" disabled={allocated.lte(0) || !portfolio.data?.rows.length} onClick={suggest}>Sugerir cheques de cartera</Button>
+              <Button data-tour="op-nueva-sugerir-cheques" variant="secondary" disabled={allocated.lte(0) || !portfolio.data?.rows.length} onClick={suggest}>Sugerir cheques de cartera</Button>
             </div>
             <div className="flex flex-col gap-3">
               {lines.map((l, i) => {
@@ -214,12 +216,12 @@ function NewPayment() {
                 const cheque = chequeById(l.chequeId);
                 return (
                   <div key={i} className="grid grid-cols-[1fr_130px_auto] items-end gap-2 border-b border-border pb-3 last:border-0">
-                    <Field label="Medio" htmlFor={`m${i}`}>
+                    <Field label="Medio" htmlFor={`m${i}`} tour="op-nueva-medio">
                       <Select id={`m${i}`} value={l.method} onChange={(e) => setLine(i, { ...emptyLine(e.target.value as Method), amount: l.amount })}>
                         {SUPPLIER_PAYMENT_METHODS.map((m) => <option key={m} value={m}>{SUPPLIER_PAYMENT_METHOD_LABELS[m]}</option>)}
                       </Select>
                     </Field>
-                    <Field label="Importe" htmlFor={`a${i}`}>
+                    <Field label="Importe" htmlFor={`a${i}`} tour="op-nueva-importe">
                       {l.method === 'THIRD_CHEQUE' ? (
                         <Input id={`a${i}`} className="num text-right" readOnly value={cheque ? fmtMoney(cheque.amount) : ''} />
                       ) : (
@@ -229,7 +231,7 @@ function NewPayment() {
                     <button aria-label="Quitar medio" className="mb-2 text-muted hover:text-danger disabled:opacity-30" disabled={lines.length === 1} onClick={() => setLines((ls) => ls.filter((_, j) => j !== i))}><Trash2 className="size-4" /></button>
                     <div className="col-span-3 grid gap-2 sm:grid-cols-3">
                       {l.method === 'THIRD_CHEQUE' && (
-                        <Field label="Cheque" htmlFor={`ch${i}`} className="sm:col-span-3">
+                        <Field label="Cheque" htmlFor={`ch${i}`} className="sm:col-span-3" tour="op-nueva-cheque">
                           <Select id={`ch${i}`} value={l.chequeId} onChange={(e) => setLine(i, { chequeId: e.target.value })}>
                             <option value="">Elegí un cheque en cartera…</option>
                             {portfolio.data?.rows.filter((c) => c.id === l.chequeId || !usedCheques.has(c.id)).map((c) => (
@@ -241,34 +243,34 @@ function NewPayment() {
                         </Field>
                       )}
                       {l.method !== 'THIRD_CHEQUE' && l.method !== 'RETENTION' && options.length > 1 && (
-                        <Field label={isOwn(l.method) ? 'Banco' : 'Sale de'} htmlFor={`c${i}`}>
+                        <Field label={isOwn(l.method) ? 'Banco' : 'Sale de'} htmlFor={`c${i}`} tour="op-nueva-cuenta">
                           <Select id={`c${i}`} value={l.cashAccountId || options[0]!.id} onChange={(e) => setLine(i, { cashAccountId: e.target.value })}>
                             {options.map((a) => <option key={a.id} value={a.id}>{a.name} ({fmtMoney(a.operationBalance)})</option>)}
                           </Select>
                         </Field>
                       )}
                       {l.method !== 'CASH' && l.method !== 'THIRD_CHEQUE' && (
-                        <Field label={isOwn(l.method) ? 'Número' : l.method === 'RETENTION' ? 'Certificado' : 'Referencia'} htmlFor={`r${i}`}>
+                        <Field label={isOwn(l.method) ? 'Número' : l.method === 'RETENTION' ? 'Certificado' : 'Referencia'} htmlFor={`r${i}`} tour="op-nueva-referencia">
                           <Input id={`r${i}`} value={l.reference} onChange={(e) => setLine(i, { reference: e.target.value })} />
                         </Field>
                       )}
                       {isOwn(l.method) && (
-                        <Field label="Fecha de pago" htmlFor={`d${i}`}><Input id={`d${i}`} type="date" value={l.paymentDate} onChange={(e) => setLine(i, { paymentDate: e.target.value })} /></Field>
+                        <Field label="Fecha de pago" htmlFor={`d${i}`} tour="op-nueva-fecha-pago"><Input id={`d${i}`} type="date" value={l.paymentDate} onChange={(e) => setLine(i, { paymentDate: e.target.value })} /></Field>
                       )}
                     </div>
                   </div>
                 );
               })}
-              <Button variant="ghost" className="self-start" onClick={() => setLines((ls) => [...ls, emptyLine('THIRD_CHEQUE')])}><Plus className="size-4" /> Agregar medio</Button>
+              <Button data-tour="op-nueva-agregar-medio" variant="ghost" className="self-start" onClick={() => setLines((ls) => [...ls, emptyLine('THIRD_CHEQUE')])}><Plus className="size-4" /> Agregar medio</Button>
             </div>
             <Field label="Observaciones" htmlFor="notes" className="mt-2"><Textarea id="notes" value={notes} onChange={(e) => setNotes(e.target.value)} /></Field>
-            <dl className="mt-4 grid grid-cols-2 gap-y-1 text-sm">
+            <dl data-tour="op-nueva-totales" className="mt-4 grid grid-cols-2 gap-y-1 text-sm">
               <dt className="text-muted">Total pagado</dt><dd className="num text-right font-semibold">{fmtMoney(total.toFixed(2))}</dd>
               <dt className="text-muted">Imputado</dt><dd className="num text-right">{fmtMoney(allocated.toFixed(2))}</dd>
               <dt className="text-muted">Anticipo</dt><dd className={`num text-right ${unapplied.isNegative() ? 'text-danger' : ''}`}>{fmtMoney(unapplied.toFixed(2))}</dd>
             </dl>
             {unapplied.isNegative() && <p className="mt-2 text-sm text-danger">Se imputa más de lo pagado.</p>}
-            <Button className="mt-4 w-full" loading={save.isPending} disabled={total.lte(0) || unapplied.isNegative()} onClick={() => save.mutate()}>Registrar pago</Button>
+            <Button data-tour="op-nueva-registrar" className="mt-4 w-full" loading={save.isPending} disabled={total.lte(0) || unapplied.isNegative()} onClick={() => save.mutate()}>Registrar pago</Button>
             <p className="mt-2 text-xs text-muted">Los cheques de cartera se endosan por su importe total. Un cheque propio baja el saldo del banco a su fecha de pago.</p>
           </Card>
         </div>

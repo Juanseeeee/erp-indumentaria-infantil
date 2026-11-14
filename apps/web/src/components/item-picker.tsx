@@ -27,11 +27,14 @@ export function ItemPicker({
   warehouseId,
   kind,
   placeholder = 'Buscar por SKU, nombre o escanear código de barras…',
+  tour = 'item-picker',
 }: {
   onPick: (item: PickedItem) => void;
   warehouseId?: string;
   kind?: 'VARIANT' | 'MATERIAL';
   placeholder?: string;
+  /** Ancla de los recorridos guiados (data-tour). */
+  tour?: string;
 }) {
   const [q, setQ] = useState('');
   const [open, setOpen] = useState(false);
@@ -50,7 +53,7 @@ export function ItemPicker({
   };
 
   return (
-    <div className="relative">
+    <div className="relative" data-tour={tour}>
       <ScanLine className="pointer-events-none absolute top-2.5 left-2.5 size-4 text-muted" aria-hidden />
       <Input
         className="pl-8"

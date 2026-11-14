@@ -84,14 +84,14 @@ export default function SettlementsPage() {
   return (
     <div className="max-w-5xl">
       <PageHeader title="Liquidación de talleres" description="El taller cobra por prenda terminada según la tarifa de cada modelo. Se liquidan las prendas aprobadas y de segunda; el descarte no se paga." />
-      <Field label="Taller" htmlFor="ws" className="mb-4 max-w-sm">
+      <Field tour="liq-taller" label="Taller" htmlFor="ws" className="mb-4 max-w-sm">
         <Select id="ws" value={workshopId} onChange={(e) => { setWorkshopId(e.target.value); setSelected([]); }}>
           <option value="">Elegí un taller…</option>
           {config.data?.workshops.map((w) => <option key={w.id} value={w.id}>{w.legalName}</option>)}
         </Select>
       </Field>
       {workshopId && (
-        <Card className="mb-4 overflow-x-auto">
+        <Card className="mb-4 overflow-x-auto" tour="liq-recepciones">
           <h2 className="border-b border-border px-4 py-3 font-medium">Recepciones sin liquidar</h2>
           <table className="w-full text-sm">
             <tbody>
@@ -109,7 +109,7 @@ export default function SettlementsPage() {
         </Card>
       )}
       {selected.length > 0 && (
-        <Card className="mb-6 flex flex-col gap-4 p-4">
+        <Card className="mb-6 flex flex-col gap-4 p-4" tour="liq-detalle">
           <div>
             <p className="mb-2 text-sm font-medium">Descuentos (faltantes, fallas imputables al taller)</p>
             {deductions.map((d, i) => (
@@ -119,10 +119,10 @@ export default function SettlementsPage() {
                 <button aria-label="Quitar" onClick={() => setDeductions((ds) => ds.filter((_, j) => j !== i))}><Trash2 className="size-4 text-muted" /></button>
               </div>
             ))}
-            <Button size="sm" variant="secondary" onClick={() => setDeductions((d) => [...d, { description: '', amount: '' }])}><Plus className="size-4" /> Agregar descuento</Button>
+            <Button data-tour="liq-descuento" size="sm" variant="secondary" onClick={() => setDeductions((d) => [...d, { description: '', amount: '' }])}><Plus className="size-4" /> Agregar descuento</Button>
           </div>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-4">
-            <label className="flex items-center gap-2 text-sm sm:col-span-4"><input type="checkbox" checked={inv.hasInvoice} onChange={(e) => setInv((v) => ({ ...v, hasInvoice: e.target.checked }))} /> El taller emitió factura</label>
+            <label data-tour="liq-factura" className="flex items-center gap-2 text-sm sm:col-span-4"><input type="checkbox" checked={inv.hasInvoice} onChange={(e) => setInv((v) => ({ ...v, hasInvoice: e.target.checked }))} /> El taller emitió factura</label>
             {inv.hasInvoice && (
               <>
                 <Field label="Tipo" htmlFor="dt"><Select id="dt" value={inv.docType} onChange={(e) => setInv((v) => ({ ...v, docType: e.target.value }))}><option>FC</option><option>FB</option><option>FA</option></Select></Field>
@@ -131,19 +131,19 @@ export default function SettlementsPage() {
                 <Field label="IVA %" htmlFor="iva"><Select id="iva" value={inv.vatRate} onChange={(e) => setInv((v) => ({ ...v, vatRate: e.target.value }))}><option value="0">0 (monotributo)</option><option value="21">21</option><option value="10.5">10,5</option></Select></Field>
               </>
             )}
-            <Field label="Fecha" htmlFor="fd"><Input id="fd" type="date" value={inv.issueDate} onChange={(e) => setInv((v) => ({ ...v, issueDate: e.target.value }))} /></Field>
+            <Field tour="liq-fecha" label="Fecha" htmlFor="fd"><Input id="fd" type="date" value={inv.issueDate} onChange={(e) => setInv((v) => ({ ...v, issueDate: e.target.value }))} /></Field>
             <Field label="Vencimiento" htmlFor="vd" hint="Vacío: según condición de pago"><Input id="vd" type="date" value={inv.dueDate} onChange={(e) => setInv((v) => ({ ...v, dueDate: e.target.value }))} /></Field>
           </div>
-          <div className="num rounded-md bg-surface-2 p-3 text-sm">
+          <div data-tour="liq-total" className="num rounded-md bg-surface-2 p-3 text-sm">
             Bruto {fmtMoney(gross)} − descuentos {fmtMoney(ded)} = <strong>{fmtMoney(net)}</strong>{inv.hasInvoice && inv.vatRate !== '0' ? ' + IVA' : ''}
           </div>
           <div>
-            <Button loading={create.isPending} disabled={inv.hasInvoice && (!inv.pointOfSale || !inv.number)} onClick={() => create.mutate()}>Registrar liquidación</Button>
+            <Button data-tour="liq-registrar" loading={create.isPending} disabled={inv.hasInvoice && (!inv.pointOfSale || !inv.number)} onClick={() => create.mutate()}>Registrar liquidación</Button>
           </div>
         </Card>
       )}
       <h2 className="mb-2 font-medium">Liquidaciones registradas</h2>
-      <Card>
+      <Card tour="liq-historial">
         <ul>
           {history.data?.map((s) => (
             <li key={s.id} className="flex justify-between border-b border-border px-4 py-2 text-sm last:border-0">

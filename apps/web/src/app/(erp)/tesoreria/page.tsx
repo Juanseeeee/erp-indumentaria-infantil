@@ -110,11 +110,11 @@ export default function TreasuryPage() {
       <PageHeader title="Tesorería" description="Cajas, bancos y cartera de cheques, con saldos por fecha de operación y fecha de valor. Transferencias entre cuentas y arqueos de caja." />
       <Tabs
         tabs={[
-          { id: 'cuentas', label: 'Cuentas' },
-          { id: 'cheques', label: 'Cartera de cheques' },
-          { id: 'transferencias', label: 'Transferencias' },
-          { id: 'arqueos', label: 'Arqueos' },
-          { id: 'conciliacion', label: 'Conciliación' },
+          { id: 'cuentas', label: 'Cuentas', tour: 'tes-tab-cuentas' },
+          { id: 'cheques', label: 'Cartera de cheques', tour: 'tes-tab-cheques' },
+          { id: 'transferencias', label: 'Transferencias', tour: 'tes-tab-transferencias' },
+          { id: 'arqueos', label: 'Arqueos', tour: 'tes-tab-arqueos' },
+          { id: 'conciliacion', label: 'Conciliación', tour: 'tes-tab-conciliacion' },
         ]}
         value={tab}
         onChange={setTab}
@@ -135,7 +135,7 @@ export default function TreasuryPage() {
 
           <div className="mb-6 grid gap-4 lg:grid-cols-2">
             <Can perm="treasury.accounts.manage">
-              <Card className="p-4">
+              <Card className="p-4" tour="tes-nueva-cuenta">
                 <h2 className="mb-3 font-medium">Nueva cuenta</h2>
                 <form className="grid gap-3 sm:grid-cols-2" onSubmit={submitAccount}>
                   <Field label="Nombre">
@@ -152,13 +152,13 @@ export default function TreasuryPage() {
                     </Field>
                   )}
                   <div className="sm:col-span-2">
-                    <Button type="submit" loading={createAccount.isPending}><Plus className="size-4" /> Crear cuenta</Button>
+                    <Button data-tour="tes-crear-cuenta" type="submit" loading={createAccount.isPending}><Plus className="size-4" /> Crear cuenta</Button>
                   </div>
                 </form>
               </Card>
             </Can>
             <Can perm="treasury.move">
-              <Card className="p-4">
+              <Card className="p-4" tour="tes-registrar-movimiento">
                 <h2 className="mb-3 font-medium">Registrar movimiento</h2>
                 {!activeId ? (
                   <p className="text-sm text-muted">Creá una cuenta para empezar a registrar movimientos.</p>
@@ -187,7 +187,7 @@ export default function TreasuryPage() {
                       <Input required maxLength={300} value={concept} onChange={(event) => setConcept(event.target.value)} />
                     </Field>
                     <div className="sm:col-span-2">
-                      <Button type="submit" loading={createMovement.isPending}>Guardar movimiento</Button>
+                      <Button data-tour="tes-guardar-movimiento" type="submit" loading={createMovement.isPending}>Guardar movimiento</Button>
                     </div>
                   </form>
                 )}
@@ -197,7 +197,7 @@ export default function TreasuryPage() {
 
           <h2 className="mb-3 font-medium">Cuentas</h2>
           {accounts.length ? (
-            <div className="mb-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            <div data-tour="tes-cuentas" className="mb-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
               {accounts.map((account) => (
                 <button
                   key={account.id}
@@ -227,7 +227,7 @@ export default function TreasuryPage() {
             <>
               <h2 className="mb-3 font-medium">Movimientos recientes</h2>
               {movementsQuery.error && <ErrorBox error={movementsQuery.error} />}
-              <Card className="overflow-hidden">
+              <Card className="overflow-hidden" tour="tes-movimientos">
                 {movementsQuery.data?.rows.length ? (
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">

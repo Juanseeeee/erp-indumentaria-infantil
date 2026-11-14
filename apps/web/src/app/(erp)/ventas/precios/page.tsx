@@ -46,32 +46,32 @@ export default function PriceListsPage() {
       <PageHeader
         title="Listas de precios"
         description="Precio por modelo con excepción por variante. Las listas derivadas se calculan desde otra con un porcentaje."
-        actions={<Can perm="sales.prices.manage"><Button onClick={() => setForm(empty)}><Plus className="size-4" /> Nueva lista</Button></Can>}
+        actions={<Can perm="sales.prices.manage"><Button data-tour="precios-nueva-lista" onClick={() => setForm(empty)}><Plus className="size-4" /> Nueva lista</Button></Can>}
       />
       {form && (
-        <Card className="mb-4 grid gap-3 p-4 sm:grid-cols-2">
-          <Field label="Nombre" htmlFor="pl-name"><Input id="pl-name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></Field>
-          <Field label="Tipo" htmlFor="pl-kind">
+        <Card className="mb-4 grid gap-3 p-4 sm:grid-cols-2" tour="precios-form">
+          <Field label="Nombre" htmlFor="pl-name" tour="precios-form-nombre"><Input id="pl-name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></Field>
+          <Field label="Tipo" htmlFor="pl-kind" tour="precios-form-tipo">
             <Select id="pl-kind" value={form.kind} onChange={(e) => setForm({ ...form, kind: e.target.value })}>
               {Object.entries(KIND).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
             </Select>
           </Field>
-          <Field label="Deriva de" htmlFor="pl-base" hint="Opcional: sin precios propios, calcula desde la base">
+          <Field tour="precios-form-base" label="Deriva de" htmlFor="pl-base" hint="Opcional: sin precios propios, calcula desde la base">
             <Select id="pl-base" value={form.baseListId} onChange={(e) => setForm({ ...form, baseListId: e.target.value })}>
               <option value="">Precios propios</option>
               {data?.filter((l) => !l.baseListId).map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
             </Select>
           </Field>
           {form.baseListId && (
-            <Field label="Porcentaje sobre la base" htmlFor="pl-mk" hint="Ej.: 60 para +60 %, -10 para −10 %">
+            <Field tour="precios-form-porcentaje" label="Porcentaje sobre la base" htmlFor="pl-mk" hint="Ej.: 60 para +60 %, -10 para −10 %">
               <Input id="pl-mk" inputMode="decimal" value={form.markupPct} onChange={(e) => setForm({ ...form, markupPct: e.target.value.replace(',', '.') })} />
             </Field>
           )}
-          <label className="flex items-center gap-2 text-sm sm:col-span-2">
+          <label className="flex items-center gap-2 text-sm sm:col-span-2" data-tour="precios-form-iva">
             <input type="checkbox" checked={form.includesVat} onChange={(e) => setForm({ ...form, includesVat: e.target.checked })} /> Los precios incluyen IVA
           </label>
           <div className="flex gap-2 sm:col-span-2">
-            <Button loading={create.isPending} disabled={!form.name || (!!form.baseListId && !form.markupPct)} onClick={() => create.mutate()}>Crear</Button>
+            <Button data-tour="precios-form-crear" loading={create.isPending} disabled={!form.name || (!!form.baseListId && !form.markupPct)} onClick={() => create.mutate()}>Crear</Button>
             <Button variant="secondary" onClick={() => setForm(null)}>Cancelar</Button>
           </div>
         </Card>
@@ -79,7 +79,7 @@ export default function PriceListsPage() {
       {!data?.length ? (
         <Card><EmptyState icon={<Tags className="size-8" />} title="Sin listas de precios" description="Creá la lista mayorista y cargá el precio de cada modelo." /></Card>
       ) : (
-        <Card className="overflow-x-auto">
+        <Card className="overflow-x-auto" tour="precios-listas">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-surface-2/60 text-xs text-muted uppercase">

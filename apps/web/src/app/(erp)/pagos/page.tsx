@@ -50,9 +50,9 @@ export default function PaymentsPage() {
       <PageHeader
         title="Pagos"
         description="Órdenes de pago a proveedores y talleres. Lo no imputado queda como anticipo."
-        actions={<Can perm="payables.pay"><LinkButton href="/pagos/nuevo"><Plus className="size-4" /> Nueva orden de pago</LinkButton></Can>}
+        actions={<Can perm="payables.pay"><LinkButton href="/pagos/nuevo" tour="op-nueva"><Plus className="size-4" /> Nueva orden de pago</LinkButton></Can>}
       />
-      <label className="mb-3 flex items-center gap-2 text-sm">
+      <label data-tour="op-solo-pendientes" className="mb-3 flex items-center gap-2 text-sm">
         <input type="checkbox" checked={onlyPending} onChange={(e) => { setOnlyPending(e.target.checked); setPage(1); }} />
         Solo pendientes de aprobación
       </label>

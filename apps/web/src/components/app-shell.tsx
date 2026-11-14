@@ -11,6 +11,7 @@ import { useCan, useMe } from '@/lib/session';
 import { NAV } from './nav';
 import { CommandPalette } from './command-palette';
 import { AssistantPanel } from './assistant';
+import { NAV_REVEAL_EVENT, TourProvider } from './tour';
 import { Spinner } from './ui';
 
 export function AppShell({ children }: { children: ReactNode }) {
@@ -75,6 +76,18 @@ export function AppShell({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname, nav.loaded]);
 
+  // Un paso de un recorrido guiado puede resaltar un enlace del menú: se abre su sección.
+  useEffect(() => {
+    const onReveal = (e: Event) => {
+      const href = (e as CustomEvent<string>).detail;
+      const section = NAV.find((s) => s.title && s.items.some((it) => it.href === href));
+      if (section?.title) nav.ensure(section.title);
+    };
+    window.addEventListener(NAV_REVEAL_EVENT, onReveal);
+    return () => window.removeEventListener(NAV_REVEAL_EVENT, onReveal);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const logout = async () => {
     await api.post('/auth/logout').catch(() => undefined);
     qc.clear();
@@ -123,6 +136,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                 <li key={it.href}>
                   <Link
                     href={it.href}
+                    data-tour={`nav-${it.href}`}
                     aria-current={isActive(it.href) ? 'page' : undefined}
                     className={cn(
                       'flex items-center gap-2.5 rounded-md px-2 py-1.5 text-sm',
@@ -142,6 +156,7 @@ export function AppShell({ children }: { children: ReactNode }) {
   );
 
   return (
+    <TourProvider>
     <div className="flex min-h-screen">
       <aside className="sticky top-0 hidden h-screen w-60 shrink-0 border-r border-border bg-surface lg:block">{sidebar}</aside>
       {mobileOpen && (
@@ -158,6 +173,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           </button>
           <button
             onClick={() => setPaletteOpen(true)}
+            data-tour="header-search"
             className="flex h-9 w-full max-w-md items-center gap-2 rounded-md border border-border bg-bg px-3 text-sm text-muted hover:bg-surface-2"
           >
             <Search className="size-4" aria-hidden />
@@ -167,6 +183,7 @@ export function AppShell({ children }: { children: ReactNode }) {
           <div className="ml-auto flex items-center gap-3">
             <button
               onClick={() => setAssistantOpen((v) => !v)}
+              data-tour="header-assistant"
               aria-pressed={assistantOpen}
               title="Asistente (Ctrl J)"
               className={cn(
@@ -178,7 +195,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               <span className="hidden sm:inline">Asistente</span>
             </button>
             <AlertsBell />
-            <Link href="/cuenta" className="hidden text-right sm:block">
+            <Link href="/cuenta" data-tour="header-account" className="hidden text-right sm:block">
               <p className="text-sm font-medium">{me.user.name}</p>
               <p className="text-xs text-muted">{me.roles.map((r) => r.name).join(', ')}</p>
             </Link>
@@ -192,6 +209,7 @@ export function AppShell({ children }: { children: ReactNode }) {
       <CommandPalette open={paletteOpen} setOpen={setPaletteOpen} onAskAssistant={() => setAssistantOpen(true)} />
       <AssistantPanel open={assistantOpen} onClose={() => setAssistantOpen(false)} />
     </div>
+    </TourProvider>
   );
 }
 
@@ -240,7 +258,7 @@ function AlertsBell() {
   const count = data?.new ?? 0;
   const label = count ? `Alertas: ${count} ${count === 1 ? 'nueva' : 'nuevas'}` : `Alertas${data?.open ? `: ${data.open} abiertas` : ''}`;
   return (
-    <Link href="/alertas" className="relative rounded-md p-2 text-muted hover:bg-surface-2 hover:text-text" aria-label={label} title={label}>
+    <Link href="/alertas" data-tour="header-alerts" className="relative rounded-md p-2 text-muted hover:bg-surface-2 hover:text-text" aria-label={label} title={label}>
       <Bell className="size-4" aria-hidden />
       {count > 0 && (
         <span className={cn('absolute -top-0.5 -right-0.5 flex min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-semibold text-white', data?.critical ? 'bg-danger' : 'bg-accent')} aria-hidden>

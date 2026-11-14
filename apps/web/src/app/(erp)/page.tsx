@@ -60,31 +60,32 @@ export default function HomePage() {
         description={can('executive.view') ? 'El negocio de un vistazo: cada número lleva a su detalle y el ⓘ explica cómo se calcula.' : 'Estado del catálogo y del inventario.'}
       />
       {can('executive.view') && (
-        <section aria-labelledby="executive-title" className="mb-8">
+        <section data-tour="inicio-tablero-direccion" aria-labelledby="executive-title" className="mb-8">
           <h2 id="executive-title" className="sr-only">Tablero de Dirección</h2>
           <ExecutiveDashboard />
         </section>
       )}
       {can('executive.view') && inv && <h2 className="mb-3 font-medium">Catálogo e inventario</h2>}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4" data-tour="inicio-indicadores">
         {can('catalog.view') && <Stat label="Modelos activos" value={products.data?.total ?? '—'} />}
         {inv && <Stat label="Prendas terminadas en stock" value={s ? fmtQty(s.finishedUnits) : '—'} hint={`${s?.itemsWithStock ?? '—'} artículos con stock`} />}
         {inv && (
           <Stat
+            tour="inicio-stat-stock-critico"
             label="Stock crítico"
             value={s?.critical ?? '—'}
             tone={s?.critical ? 'warning' : undefined}
             hint="Disponible por debajo del mínimo"
           />
         )}
-        {inv && <Stat label="Ajustes por aprobar" value={s?.pendingApproval ?? '—'} tone={s?.pendingApproval ? 'warning' : undefined} />}
+        {inv && <Stat tour="inicio-stat-ajustes" label="Ajustes por aprobar" value={s?.pendingApproval ?? '—'} tone={s?.pendingApproval ? 'warning' : undefined} />}
         {s?.valueFinished != null && <Stat label="Valor producto terminado" value={fmtMoney(s.valueFinished)} hint="Costo promedio · estimado, no contable" />}
         {s?.valueMaterials != null && <Stat label="Valor materias primas" value={fmtMoney(s.valueMaterials)} hint="Costo promedio · estimado, no contable" />}
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-2">
         {inv && (
-          <Card>
+          <Card tour="inicio-stock-critico">
             <div className="flex items-center justify-between border-b border-border px-4 py-3">
               <h2 className="flex items-center gap-2 font-medium">
                 <AlertTriangle className="size-4 text-warning" aria-hidden /> Stock crítico
@@ -112,7 +113,7 @@ export default function HomePage() {
           </Card>
         )}
         {inv && (
-          <Card>
+          <Card tour="inicio-ultimos-movimientos">
             <div className="flex items-center justify-between border-b border-border px-4 py-3">
               <h2 className="font-medium">Últimos movimientos de stock</h2>
               <Link href="/stock/documentos" className="flex items-center gap-1 text-sm text-accent">

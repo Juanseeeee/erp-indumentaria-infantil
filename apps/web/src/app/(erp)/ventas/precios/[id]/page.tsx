@@ -78,24 +78,24 @@ export default function PriceListPage({ params }: { params: Promise<{ id: string
         description={`${data.list.includesVat ? 'Precios con IVA incluido' : 'Precios sin IVA'}${derived ? ` · derivada (${Number(data.list.markupPct) >= 0 ? '+' : ''}${fmtQty(data.list.markupPct)} % sobre la base)` : ''}`}
       />
       {editable && (
-        <Card className="mb-4 flex flex-wrap items-end gap-3 p-4">
-          <Field label="Vigencia desde" htmlFor="vf" hint="Vacío = hoy"><Input id="vf" type="date" value={validFrom} onChange={(e) => setValidFrom(e.target.value)} /></Field>
-          <Field label="Aumento %" htmlFor="pct" hint="Negativo para rebajar"><Input id="pct" className="w-28" inputMode="decimal" value={bulk.pct} onChange={(e) => setBulk({ ...bulk, pct: e.target.value.replace(',', '.') })} /></Field>
-          <Field label="Redondear a" htmlFor="rt" hint="Ej.: 10 o 100"><Input id="rt" className="w-28" inputMode="decimal" value={bulk.roundTo} onChange={(e) => setBulk({ ...bulk, roundTo: e.target.value })} /></Field>
-          <Button variant="secondary" disabled={!bulk.pct} loading={bulkUpdate.isPending} onClick={() => bulkUpdate.mutate()}>Actualizar toda la lista</Button>
-          <Button className="ml-auto" disabled={!changed} loading={save.isPending} onClick={() => save.mutate()}>Guardar {changed || ''} cambio(s)</Button>
+        <Card className="mb-4 flex flex-wrap items-end gap-3 p-4" tour="precio-lista-herramientas">
+          <Field tour="precio-lista-vigencia" label="Vigencia desde" htmlFor="vf" hint="Vacío = hoy"><Input id="vf" type="date" value={validFrom} onChange={(e) => setValidFrom(e.target.value)} /></Field>
+          <Field tour="precio-lista-aumento" label="Aumento %" htmlFor="pct" hint="Negativo para rebajar"><Input id="pct" className="w-28" inputMode="decimal" value={bulk.pct} onChange={(e) => setBulk({ ...bulk, pct: e.target.value.replace(',', '.') })} /></Field>
+          <Field tour="precio-lista-redondeo" label="Redondear a" htmlFor="rt" hint="Ej.: 10 o 100"><Input id="rt" className="w-28" inputMode="decimal" value={bulk.roundTo} onChange={(e) => setBulk({ ...bulk, roundTo: e.target.value })} /></Field>
+          <Button data-tour="precio-lista-actualizar" variant="secondary" disabled={!bulk.pct} loading={bulkUpdate.isPending} onClick={() => bulkUpdate.mutate()}>Actualizar toda la lista</Button>
+          <Button data-tour="precio-lista-guardar" className="ml-auto" disabled={!changed} loading={save.isPending} onClick={() => save.mutate()}>Guardar {changed || ''} cambio(s)</Button>
         </Card>
       )}
       {derived && <p className="mb-3 text-sm text-muted">Los precios de esta lista se calculan desde la lista base: para cambiarlos, editá la base o el porcentaje.</p>}
-      <Input className="mb-3 max-w-sm" placeholder="Filtrar modelos…" value={filter} onChange={(e) => setFilter(e.target.value)} aria-label="Filtrar modelos" />
+      <Input data-tour="precio-lista-filtro" className="mb-3 max-w-sm" placeholder="Filtrar modelos…" value={filter} onChange={(e) => setFilter(e.target.value)} aria-label="Filtrar modelos" />
       <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
-        <Card className="overflow-x-auto">
+        <Card className="overflow-x-auto" tour="precio-lista-modelos">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-surface-2/60 text-xs text-muted uppercase">
                 <th className="px-3 py-2 text-left">Modelo</th>
                 <th className="px-3 py-2 text-right">Precio vigente</th>
-                {editable && <th className="px-3 py-2 text-right">Nuevo precio</th>}
+                {editable && <th className="px-3 py-2 text-right" data-tour="precio-lista-nuevo-precio">Nuevo precio</th>}
                 <th className="w-10" />
               </tr>
             </thead>

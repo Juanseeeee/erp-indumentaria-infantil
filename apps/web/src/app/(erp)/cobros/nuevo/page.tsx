@@ -107,21 +107,21 @@ function NewReceipt() {
     <div className="max-w-6xl">
       <PageHeader title="Nuevo cobro" description="Cargá cómo pagó el cliente e imputá a sus comprobantes. Lo que no se impute queda como saldo a favor." />
       <Card className="mb-4 grid gap-4 p-4 sm:grid-cols-3">
-        <Field label="Cliente" htmlFor="customer" className="sm:col-span-2">
+        <Field label="Cliente" htmlFor="customer" className="sm:col-span-2" tour="cobro-nuevo-cliente">
           <Select id="customer" value={customerId} onChange={(e) => { setCustomerId(e.target.value); setAlloc({}); }}>
             <option value="">Elegí un cliente…</option>
             {customers.data?.rows.map((c) => <option key={c.id} value={c.id}>{c.legalName}</option>)}
           </Select>
         </Field>
-        <Field label="Fecha" htmlFor="date"><Input id="date" type="date" value={date} onChange={(e) => setDate(e.target.value)} /></Field>
+        <Field label="Fecha" htmlFor="date" tour="cobro-nuevo-fecha"><Input id="date" type="date" value={date} onChange={(e) => setDate(e.target.value)} /></Field>
       </Card>
 
       {customerId && (
         <div className="grid gap-4 lg:grid-cols-2">
-          <Card className="p-4">
+          <Card className="p-4" tour="cobro-nuevo-pendientes">
             <div className="mb-2 flex items-center justify-between">
               <p className="font-medium">Comprobantes pendientes</p>
-              <Button variant="secondary" disabled={total.lte(0)} onClick={() => autoAllocate()}>Imputar por vencimiento</Button>
+              <Button data-tour="cobro-nuevo-imputar-auto" variant="secondary" disabled={total.lte(0)} onClick={() => autoAllocate()}>Imputar por vencimiento</Button>
             </div>
             {open.isLoading ? <Spinner /> : !open.data?.debits.length ? (
               <EmptyState title="Sin deuda pendiente" description="El cobro quedará como saldo a favor del cliente." />
@@ -160,7 +160,7 @@ function NewReceipt() {
             )}
           </Card>
 
-          <Card className="p-4">
+          <Card className="p-4" tour="cobro-nuevo-medios">
             <p className="mb-2 font-medium">Medios de cobro</p>
             <div className="flex flex-col gap-3">
               {payments.map((p, i) => {
@@ -191,16 +191,16 @@ function NewReceipt() {
                   </div>
                 );
               })}
-              <Button variant="ghost" className="self-start" onClick={() => setPayments((ps) => [...ps, emptyPayment('CHEQUE')])}><Plus className="size-4" /> Agregar medio</Button>
+              <Button data-tour="cobro-nuevo-agregar-medio" variant="ghost" className="self-start" onClick={() => setPayments((ps) => [...ps, emptyPayment('CHEQUE')])}><Plus className="size-4" /> Agregar medio</Button>
             </div>
             <Field label="Observaciones" htmlFor="notes" className="mt-2"><Textarea id="notes" value={notes} onChange={(e) => setNotes(e.target.value)} /></Field>
-            <dl className="mt-4 grid grid-cols-2 gap-y-1 text-sm">
+            <dl className="mt-4 grid grid-cols-2 gap-y-1 text-sm" data-tour="cobro-nuevo-totales">
               <dt className="text-muted">Total cobrado</dt><dd className="num text-right font-semibold">{fmtMoney(total.toFixed(2))}</dd>
               <dt className="text-muted">Imputado</dt><dd className="num text-right">{fmtMoney(allocated.toFixed(2))}</dd>
               <dt className="text-muted">Saldo a favor</dt><dd className={`num text-right ${unapplied.isNegative() ? 'text-danger' : ''}`}>{fmtMoney(unapplied.toFixed(2))}</dd>
             </dl>
             {unapplied.isNegative() && <p className="mt-2 text-sm text-danger">Se imputa más de lo cobrado.</p>}
-            <Button className="mt-4 w-full" loading={save.isPending} disabled={total.lte(0) || unapplied.isNegative()} onClick={() => save.mutate()}>Registrar cobro</Button>
+            <Button data-tour="cobro-nuevo-registrar" className="mt-4 w-full" loading={save.isPending} disabled={total.lte(0) || unapplied.isNegative()} onClick={() => save.mutate()}>Registrar cobro</Button>
             <p className="mt-2 text-xs text-muted">Cada medio ingresa en su caja, banco o billetera; los cheques quedan en la cartera. Las retenciones no mueven fondos.</p>
           </Card>
         </div>

@@ -93,7 +93,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
         description={`Modelo ${p.code} · ${data.cells.length} variantes`}
         actions={
           can('catalog.edit') && (
-            <Button variant="secondary" onClick={() => setEditHeader((v) => !v)}>
+            <Button data-tour="modelo-editar" variant="secondary" onClick={() => setEditHeader((v) => !v)}>
               <Pencil className="size-4" /> Editar datos
             </Button>
           )
@@ -101,7 +101,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
       />
 
       {editHeader && md && (
-        <Card className="mb-4 p-4">
+        <Card className="mb-4 p-4" tour="modelo-editar-form">
           <form
             className="grid grid-cols-1 gap-3 sm:grid-cols-4"
             onSubmit={(e) => {
@@ -121,7 +121,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
             <Field label="Nombre" htmlFor="pname">
               <Input id="pname" name="name" defaultValue={p.name} />
             </Field>
-            <Field label="Estado" htmlFor="pstatus">
+            <Field tour="modelo-editar-estado" label="Estado" htmlFor="pstatus">
               <Select id="pstatus" name="status" defaultValue={p.status}>
                 <option value="ACTIVE">Activo</option>
                 <option value="DRAFT">Borrador</option>
@@ -144,7 +144,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
               <Input id="pmat" name="materialText" defaultValue={p.materialText ?? ''} />
             </Field>
             <div className="flex items-end gap-2 sm:col-span-2">
-              <Button type="submit" loading={update.isPending}>Guardar</Button>
+              <Button data-tour="modelo-guardar" type="submit" loading={update.isPending}>Guardar</Button>
               <Button type="button" variant="secondary" onClick={() => setEditHeader(false)}>Cancelar</Button>
             </div>
           </form>
@@ -152,7 +152,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
         </Card>
       )}
 
-      <Card className="p-4">
+      <Card className="p-4" tour="modelo-grilla">
         <div className="mb-3 flex flex-wrap items-center gap-2">
           <Tabs
             value={view}
@@ -161,11 +161,11 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
               { id: 'available', label: 'Disponible' },
               { id: 'onHand', label: 'Físico' },
               { id: 'reserved', label: 'Reservado' },
-              { id: 'sku', label: 'SKU' },
-              { id: 'barcode', label: 'Código de barras' },
+              { id: 'sku', label: 'SKU', tour: 'modelo-vista-sku' },
+              { id: 'barcode', label: 'Código de barras', tour: 'modelo-vista-barras' },
             ]}
           />
-          <Select aria-label="Depósito" className="ml-auto w-56" value={warehouseId} onChange={(e) => setWarehouseId(e.target.value)}>
+          <Select data-tour="modelo-deposito" aria-label="Depósito" className="ml-auto w-56" value={warehouseId} onChange={(e) => setWarehouseId(e.target.value)}>
             <option value="">Todos los depósitos</option>
             {md?.warehouses.filter((w) => w.isActive).map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
           </Select>
@@ -183,6 +183,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
               />
               <div className="mt-3 flex gap-2">
                 <Button
+                  data-tour="modelo-guardar-minimos"
                   loading={patch.isPending}
                   onClick={() =>
                     patch.mutate(
@@ -206,6 +207,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
         {!editMin && can('catalog.edit') && (
           <div className="mt-3 flex flex-wrap gap-2">
             <Button
+              data-tour="modelo-editar-minimos"
               variant="secondary"
               size="sm"
               onClick={() => {
@@ -221,7 +223,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
 
       {can('catalog.edit') && (
         <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
-          <Card className="p-4">
+          <Card className="p-4" tour="modelo-variantes-activas">
             <h2 className="mb-2 font-medium">Activar o desactivar variantes</h2>
             <p className="mb-3 text-sm text-muted">Una variante inactiva no se ofrece en pedidos ni producción, pero conserva su historial.</p>
             <div className="flex max-h-64 flex-col gap-1 overflow-y-auto">
@@ -245,7 +247,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
               ))}
             </div>
           </Card>
-          <Card className="p-4">
+          <Card className="p-4" tour="modelo-agregar-colores">
             <h2 className="mb-2 font-medium">Agregar colores</h2>
             {missingColors.length ? (
               <>
@@ -266,7 +268,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                     );
                   })}
                 </div>
-                <Button className="mt-3" size="sm" disabled={!addColors.length} loading={add.isPending} onClick={() => add.mutate()}>
+                <Button data-tour="modelo-generar-variantes" className="mt-3" size="sm" disabled={!addColors.length} loading={add.isPending} onClick={() => add.mutate()}>
                   <Plus className="size-4" /> Generar {addColors.length * data.sizes.length} variantes
                 </Button>
               </>

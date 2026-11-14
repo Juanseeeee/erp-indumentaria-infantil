@@ -64,10 +64,10 @@ export default function UsersPage() {
       <PageHeader
         title="Usuarios"
         description="Al desactivar un usuario se cierran todas sus sesiones."
-        actions={manage && !creating && <Button onClick={() => setCreating(true)}>Nuevo usuario</Button>}
+        actions={manage && !creating && <Button onClick={() => setCreating(true)} data-tour="usuarios-nuevo">Nuevo usuario</Button>}
       />
       {creating && (
-        <Card className="mb-4 p-4">
+        <Card className="mb-4 p-4" tour="usuarios-form">
           <form
             className="grid grid-cols-1 gap-3 sm:grid-cols-3"
             onSubmit={(e) => {
@@ -78,10 +78,10 @@ export default function UsersPage() {
           >
             <Field label="Nombre" htmlFor="uname"><Input id="uname" name="name" required /></Field>
             <Field label="Email" htmlFor="uemail"><Input id="uemail" name="email" type="email" required /></Field>
-            <Field label="Contraseña inicial" htmlFor="upw" hint="Mínimo 10 caracteres, con letras y números.">
+            <Field label="Contraseña inicial" htmlFor="upw" tour="usuarios-contrasena" hint="Mínimo 10 caracteres, con letras y números.">
               <Input id="upw" name="password" type="password" autoComplete="new-password" required />
             </Field>
-            <fieldset className="sm:col-span-3">
+            <fieldset className="sm:col-span-3" data-tour="usuarios-roles">
               <legend className="mb-2 text-sm font-medium">Roles</legend>
               <div className="flex flex-wrap gap-2">
                 {roles.data?.roles.map((r) => (
@@ -97,19 +97,19 @@ export default function UsersPage() {
               </div>
             </fieldset>
             <div className="flex gap-2 sm:col-span-3">
-              <Button type="submit" loading={create.isPending} disabled={!roleIds.length}>Crear usuario</Button>
+              <Button type="submit" loading={create.isPending} disabled={!roleIds.length} data-tour="usuarios-crear">Crear usuario</Button>
               <Button type="button" variant="secondary" onClick={() => setCreating(false)}>Cancelar</Button>
             </div>
           </form>
         </Card>
       )}
-      <Card className="overflow-x-auto">
+      <Card className="overflow-x-auto" tour="usuarios-tabla">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border bg-surface-2/60 text-xs text-muted uppercase">
               <th className="px-3 py-2 text-left">Usuario</th>
-              <th className="px-3 py-2 text-left">Roles</th>
-              <th className="px-3 py-2 text-left">Último ingreso</th>
+              <th className="px-3 py-2 text-left" data-tour="usuarios-col-roles">Roles</th>
+              <th className="px-3 py-2 text-left" data-tour="usuarios-col-ingreso">Último ingreso</th>
               <th className="px-3 py-2" />
             </tr>
           </thead>

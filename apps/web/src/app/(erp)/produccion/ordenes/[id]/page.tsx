@@ -102,19 +102,21 @@ export default function ProductionOrderPage({ params }: { params: Promise<{ id: 
   return (
     <div className="max-w-6xl">
       <PageHeader
+        tour="op-detalle-encabezado"
         title={`${o.number} · ${o.product.name}`}
         description={`Entrega ${fmtDate(o.dueDate)} · prioridad ${PRIORITY[o.priority]} · materiales de ${wh(o.materialsWarehouseId)} → ${wh(o.outputWarehouseId)}${o.techSheetVersionNo ? ` · ficha v${o.techSheetVersionNo}` : ''}`}
         actions={
           <>
             <Badge tone={tone}>{label}</Badge>
             {o.status === 'DRAFT' && can('production.plan') && (
-              <Button loading={release.isPending} onClick={() => release.mutate({})}>Liberar orden</Button>
+              <Button data-tour="op-detalle-liberar" loading={release.isPending} onClick={() => release.mutate({})}>Liberar orden</Button>
             )}
             {active && shortages.length > 0 && can('purchasing.order') && (
-              <Button variant="secondary" loading={purchaseReq.isPending} onClick={() => purchaseReq.mutate()}>Pedir faltantes a Compras</Button>
+              <Button data-tour="op-detalle-pedir-faltantes" variant="secondary" loading={purchaseReq.isPending} onClick={() => purchaseReq.mutate()}>Pedir faltantes a Compras</Button>
             )}
             {['IN_PROGRESS', 'COMPLETED'].includes(o.status) && can('production.plan') && (
               <Button
+                data-tour="op-detalle-cerrar"
                 variant={o.status === 'COMPLETED' ? 'primary' : 'secondary'}
                 loading={close.isPending}
                 onClick={() => (o.pendingConsumption.length ? setClosingShort(true) : close.mutate({}))}
@@ -123,13 +125,13 @@ export default function ProductionOrderPage({ params }: { params: Promise<{ id: 
               </Button>
             )}
             {['DRAFT', 'RELEASED', 'IN_PROGRESS'].includes(o.status) && can('production.plan') && !cancelling && (
-              <Button variant="ghost" onClick={() => setCancelling(true)}>Cancelar</Button>
+              <Button data-tour="op-detalle-cancelar" variant="ghost" onClick={() => setCancelling(true)}>Cancelar</Button>
             )}
           </>
         }
       />
       {cancelling && (
-        <div className="mb-4">
+        <div className="mb-4" data-tour="op-detalle-panel-cancelar">
           <ConfirmPanel
             title={`Cancelar ${o.number}`}
             impact="Se liberan las reservas de materiales. Si hay materiales en poder de talleres, primero hay que registrar su devolución o el faltante. Lo ya consumido queda registrado como costo de la orden cancelada."
@@ -144,7 +146,7 @@ export default function ProductionOrderPage({ params }: { params: Promise<{ id: 
         </div>
       )}
       {closingShort && (
-        <div className="mb-4">
+        <div className="mb-4" data-tour="op-detalle-panel-cerrar">
           <ConfirmPanel
             title={`Cerrar ${o.number} sin registrar todo el consumo`}
             impact={`Falta consumir según la ficha: ${o.pendingConsumption.map((p) => `${p.sku} ${fmtQty(p.qty)}`).join(', ')}. Si el material se usó, primero registrá la recepción de la compra y «Consumir según ficha»: si cerrás así, el costo real no lo incluye.`}
@@ -159,18 +161,18 @@ export default function ProductionOrderPage({ params }: { params: Promise<{ id: 
         </div>
       )}
       {active && o.pendingConsumption.length > 0 && (
-        <div className="mb-4 flex flex-wrap items-center gap-3 rounded-md bg-warning-soft px-3 py-2 text-sm text-warning">
+        <div data-tour="op-detalle-consumo-pendiente" className="mb-4 flex flex-wrap items-center gap-3 rounded-md bg-warning-soft px-3 py-2 text-sm text-warning">
           <AlertTriangle className="size-4" aria-hidden />
           <span className="flex-1">
             Consumo de materiales pendiente por las prendas ya ingresadas: {o.pendingConsumption.map((p) => `${p.sku} (${fmtQty(p.qty)})`).join(', ')}. Cuando el material esté en stock (recepción de compra registrada), registralo para que el costo real lo incluya.
           </span>
           {can('production.materials') && (
-            <Button size="sm" loading={consume.isPending} onClick={() => consume.mutate({})}>Consumir según ficha</Button>
+            <Button data-tour="op-detalle-consumir" size="sm" loading={consume.isPending} onClick={() => consume.mutate({})}>Consumir según ficha</Button>
           )}
         </div>
       )}
       {active && shortages.length > 0 && (
-        <p className="mb-4 flex items-center gap-2 rounded-md bg-warning-soft px-3 py-2 text-sm text-warning">
+        <p data-tour="op-detalle-faltantes" className="mb-4 flex items-center gap-2 rounded-md bg-warning-soft px-3 py-2 text-sm text-warning">
           <AlertTriangle className="size-4" aria-hidden /> Faltan materiales: {shortages.map((s) => `${s.item?.sku} (${fmtQty(s.shortage)} ${s.uom ?? ''})`).join(', ')}. Se reservó lo disponible; lo que falta se reserva y consume cuando registres la recepción de la compra.
         </p>
       )}
@@ -179,12 +181,12 @@ export default function ProductionOrderPage({ params }: { params: Promise<{ id: 
         value={tab}
         onChange={setTab}
         tabs={[
-          { id: 'prendas', label: 'Prendas' },
-          { id: 'materiales', label: 'Materiales' },
-          { id: 'etapas', label: 'Etapas' },
-          { id: 'talleres', label: `Talleres (${o.dispatches.length})` },
-          { id: 'ingresos', label: `Ingresos y calidad (${o.outputs.length})` },
-          ...(can('costs.view') ? [{ id: 'costos', label: 'Costos' }] : []),
+          { id: 'prendas', label: 'Prendas', tour: 'op-tab-prendas' },
+          { id: 'materiales', label: 'Materiales', tour: 'op-tab-materiales' },
+          { id: 'etapas', label: 'Etapas', tour: 'op-tab-etapas' },
+          { id: 'talleres', label: `Talleres (${o.dispatches.length})`, tour: 'op-tab-talleres' },
+          { id: 'ingresos', label: `Ingresos y calidad (${o.outputs.length})`, tour: 'op-tab-ingresos' },
+          ...(can('costs.view') ? [{ id: 'costos', label: 'Costos', tour: 'op-tab-costos' }] : []),
         ]}
       />
 
@@ -215,9 +217,9 @@ function GarmentsTab({ o }: { o: Detail }) {
     { planned: 0, good: 0, second: 0, scrap: 0 },
   );
   return (
-    <Card className="p-4">
+    <Card className="p-4" tour="op-prendas-grilla">
       <div className="mb-3 flex flex-wrap items-center gap-4 text-sm">
-        <Select aria-label="Vista" className="w-48" value={view} onChange={(e) => setView(e.target.value as typeof view)}>
+        <Select data-tour="op-prendas-vista" aria-label="Vista" className="w-48" value={view} onChange={(e) => setView(e.target.value as typeof view)}>
           <option value="planned">Planificado</option>
           <option value="done">Aprobado (1ra)</option>
           <option value="pending">Pendiente</option>
@@ -268,11 +270,11 @@ function MaterialsTab({ o, active, onDone }: { o: Detail; active: boolean; onDon
   };
   const lines = Object.entries(qty).filter(([, v]) => Number(v) > 0).map(([materialItemId, v]) => ({ materialItemId, qty: v }));
   return (
-    <Card className="overflow-x-auto">
+    <Card className="overflow-x-auto" tour="op-materiales-tabla">
       {active && can('production.materials') && (
         <div className="flex flex-wrap gap-2 border-b border-border p-3">
-          <Button size="sm" onClick={() => start('issue')}>Entregar a planta (corte propio)</Button>
-          <Button size="sm" variant="secondary" onClick={() => start('return')}>Devolver sobrante de planta</Button>
+          <Button data-tour="op-materiales-entregar" size="sm" onClick={() => start('issue')}>Entregar a planta (corte propio)</Button>
+          <Button data-tour="op-materiales-devolver" size="sm" variant="secondary" onClick={() => start('return')}>Devolver sobrante de planta</Button>
           <span className="w-full text-xs text-muted">
             Corte y planta propia: «Entregar a planta» descuenta del depósito de materiales. Talleres externos: en la pestaña Talleres se arma el envío con las prendas cortadas y los materiales, que pasan al depósito del taller y se consumen al recibir las prendas. Si se ingresan prendas hechas en planta sin haber entregado materiales, se consumen solos según la ficha.
           </span>
@@ -335,6 +337,7 @@ function MaterialsTab({ o, active, onDone }: { o: Detail; active: boolean; onDon
       {mode && (
         <div className="flex gap-2 border-t border-border p-3">
           <Button
+            data-tour="op-materiales-confirmar"
             disabled={!lines.length}
             loading={issue.isPending || ret.isPending}
             onClick={() => (mode === 'issue' ? issue.mutate({ lines }) : ret.mutate({ lines }))}
@@ -360,7 +363,7 @@ function StagesTab({ o, active, reasons, onDone }: { o: Detail; active: boolean;
   const open = o.stages.filter((s) => s.status === 'PENDING' || s.status === 'IN_PROGRESS');
   return (
     <div className="flex flex-col gap-4">
-      <Card>
+      <Card tour="op-etapas-recorrido">
         <ol>
           {o.stages.map((s, i) => {
             const [l, tone] = STAGE_STATUS[s.status] ?? [s.status, 'neutral'];
@@ -386,24 +389,25 @@ function StagesTab({ o, active, reasons, onDone }: { o: Detail; active: boolean;
         {!o.stages.length && <p className="p-6 text-center text-sm text-muted">El recorrido se define al liberar la orden.</p>}
       </Card>
       {active && can('production.report') && open.length > 0 && (
-        <Card className="grid grid-cols-1 gap-3 p-4 sm:grid-cols-5">
-          <Field label="Etapa" htmlFor="st">
+        <Card className="grid grid-cols-1 gap-3 p-4 sm:grid-cols-5" tour="op-etapas-informe">
+          <Field tour="op-etapas-etapa" label="Etapa" htmlFor="st">
             <Select id="st" value={stageId} onChange={(e) => setStageId(e.target.value)}>
               <option value="">Elegí…</option>
               {open.map((s) => <option key={s.stageId} value={s.stageId}>{s.stage?.name}</option>)}
             </Select>
           </Field>
-          <Field label="Prendas OK" htmlFor="good"><Input id="good" inputMode="numeric" value={good} onChange={(e) => setGood(e.target.value.replace(/\D/g, ''))} /></Field>
-          <Field label="Con falla" htmlFor="defect"><Input id="defect" inputMode="numeric" value={defect} onChange={(e) => setDefect(e.target.value.replace(/\D/g, ''))} /></Field>
-          <Field label="Motivo de falla" htmlFor="reason">
+          <Field tour="op-etapas-ok" label="Prendas OK" htmlFor="good"><Input id="good" inputMode="numeric" value={good} onChange={(e) => setGood(e.target.value.replace(/\D/g, ''))} /></Field>
+          <Field tour="op-etapas-falla" label="Con falla" htmlFor="defect"><Input id="defect" inputMode="numeric" value={defect} onChange={(e) => setDefect(e.target.value.replace(/\D/g, ''))} /></Field>
+          <Field tour="op-etapas-motivo" label="Motivo de falla" htmlFor="reason">
             <Select id="reason" value={reason} onChange={(e) => setReason(e.target.value)} disabled={!defect}>
               <option value="">—</option>
               {reasons.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
             </Select>
           </Field>
           <div className="flex flex-col justify-end gap-2">
-            <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={finish} onChange={(e) => setFinish(e.target.checked)} /> Etapa terminada</label>
+            <label data-tour="op-etapas-terminada" className="flex items-center gap-2 text-sm"><input type="checkbox" checked={finish} onChange={(e) => setFinish(e.target.checked)} /> Etapa terminada</label>
             <Button
+              data-tour="op-etapas-informar"
               disabled={!stageId || (!good && !defect && !finish)}
               loading={report.isPending}
               onClick={() => report.mutate({ stageId, qtyGood: good || '0', qtyDefect: defect || '0', defectReasonId: reason || null, finishStage: finish })}
@@ -452,7 +456,7 @@ function WorkshopsTab({ o, active, workshops, onDone }: { o: Detail; active: boo
         const sent = g.reduce((a, l) => a + Number(l.qty), 0);
         const rec = g.reduce((a, l) => a + Number(l.receivedQty), 0);
         return (
-          <Card key={d.id} className="p-4 text-sm">
+          <Card key={d.id} className="p-4 text-sm" tour="op-talleres-envio">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <p className="font-medium">{d.number} · {d.workshop?.legalName}</p>
               <span className="text-muted">Enviado {fmtDateTime(d.sentAt)} · esperado {fmtDate(d.expectedAt)}</span>
@@ -468,7 +472,7 @@ function WorkshopsTab({ o, active, workshops, onDone }: { o: Detail; active: boo
       })}
 
       {inWorkshop.length > 0 && (
-        <Card className="p-4">
+        <Card className="p-4" tour="op-talleres-en-poder">
           <p className="mb-2 text-sm font-medium">Materiales de esta orden en poder de talleres</p>
           <ul className="mb-3 text-sm">
             {inWorkshop.map((r) => <li key={r.id} className="num">{r.item?.name}: {fmtQty(r.atWorkshopQty)} {r.uom}</li>)}
@@ -476,16 +480,16 @@ function WorkshopsTab({ o, active, workshops, onDone }: { o: Detail; active: boo
           {can('production.materials') &&
             workshopIds.map((w) => (
               <div key={w} className="flex flex-wrap gap-2">
-                <Button size="sm" variant="secondary" onClick={() => { setWsAction({ type: 'return', workshopId: w }); setWsQty({}); }}>
+                <Button data-tour="op-talleres-devolucion" size="sm" variant="secondary" onClick={() => { setWsAction({ type: 'return', workshopId: w }); setWsQty({}); }}>
                   Registrar devolución de {workshops.find((x) => x.id === w)?.legalName}
                 </Button>
                 {can('production.workshop') && (
-                  <Button size="sm" variant="ghost" onClick={() => { setWsAction({ type: 'writeoff', workshopId: w }); setWsQty({}); }}>Registrar faltante</Button>
+                  <Button data-tour="op-talleres-faltante" size="sm" variant="ghost" onClick={() => { setWsAction({ type: 'writeoff', workshopId: w }); setWsQty({}); }}>Registrar faltante</Button>
                 )}
               </div>
             ))}
           {wsAction && (
-            <div className="mt-3 flex flex-col gap-2 rounded-md border border-border p-3">
+            <div data-tour="op-talleres-cantidades" className="mt-3 flex flex-col gap-2 rounded-md border border-border p-3">
               {inWorkshop.map((r) => (
                 <label key={r.id} className="flex items-center justify-between gap-3 text-sm">
                   {r.item?.name} (en taller {fmtQty(r.atWorkshopQty)})
@@ -493,10 +497,11 @@ function WorkshopsTab({ o, active, workshops, onDone }: { o: Detail; active: boo
                 </label>
               ))}
               {wsAction.type === 'writeoff' && (
-                <Field label="Motivo del faltante" htmlFor="wsr"><Input id="wsr" value={wsReason} onChange={(e) => setWsReason(e.target.value)} /></Field>
+                <Field tour="op-talleres-motivo-faltante" label="Motivo del faltante" htmlFor="wsr"><Input id="wsr" value={wsReason} onChange={(e) => setWsReason(e.target.value)} /></Field>
               )}
               <div className="flex gap-2">
                 <Button
+                  data-tour="op-talleres-confirmar"
                   size="sm"
                   loading={ret.isPending || writeOff.isPending}
                   onClick={() => {
@@ -515,24 +520,24 @@ function WorkshopsTab({ o, active, workshops, onDone }: { o: Detail; active: boo
       )}
 
       {active && can('production.workshop') && !creating && (
-        <div><Button onClick={startDispatch}>Nuevo envío a taller</Button></div>
+        <div><Button data-tour="op-talleres-nuevo-envio" onClick={startDispatch}>Nuevo envío a taller</Button></div>
       )}
       {creating && (
-        <Card className="flex flex-col gap-4 p-4">
+        <Card className="flex flex-col gap-4 p-4" tour="op-envio-form">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <Field label="Taller" htmlFor="ws">
+            <Field tour="op-envio-taller" label="Taller" htmlFor="ws">
               <Select id="ws" value={workshopId} onChange={(e) => setWorkshopId(e.target.value)}>
                 <option value="">Elegí…</option>
                 {workshops.map((w) => <option key={w.id} value={w.id}>{w.legalName}</option>)}
               </Select>
             </Field>
-            <Field label="Fecha esperada de entrega" htmlFor="exp"><Input id="exp" type="date" value={expectedAt} onChange={(e) => setExpectedAt(e.target.value)} /></Field>
+            <Field tour="op-envio-fecha" label="Fecha esperada de entrega" htmlFor="exp"><Input id="exp" type="date" value={expectedAt} onChange={(e) => setExpectedAt(e.target.value)} /></Field>
           </div>
-          <div>
+          <div data-tour="op-envio-prendas">
             <p className="mb-2 text-sm font-medium">Prendas a confeccionar (precargado: lo pendiente de enviar)</p>
             <VariantGrid sizes={o.sizes.filter((s) => cells.some((c) => c.sizeId === s.id))} colors={o.colors.filter((c) => cells.some((x) => x.colorId === c.id))} cells={cells} values={garments} onChange={(k, v) => setGarments((g) => ({ ...g, [k]: v }))} />
           </div>
-          <div>
+          <div data-tour="op-envio-materiales">
             <p className="mb-2 text-sm font-medium">Materiales que viajan con el envío (pasan al depósito del taller)</p>
             {o.requirements.map((r) => (
               <label key={r.id} className="flex items-center justify-between gap-3 border-b border-border py-1.5 text-sm last:border-0">
@@ -543,6 +548,7 @@ function WorkshopsTab({ o, active, workshops, onDone }: { o: Detail; active: boo
           </div>
           <div className="flex gap-2">
             <Button
+              data-tour="op-envio-confirmar"
               disabled={!workshopId}
               loading={dispatch.isPending}
               onClick={() =>
@@ -589,7 +595,7 @@ function OutputsTab({ o, active, reasons, onDone }: { o: Detail; active: boolean
   return (
     <div className="flex flex-col gap-4">
       {o.outputs.map((out) => (
-        <Card key={out.id} className="p-4 text-sm">
+        <Card key={out.id} className="p-4 text-sm" tour="op-ingresos-registro">
           <p className="font-medium">
             {out.number} · {fmtDateTime(out.createdAt)} {out.workshopId ? '· recepción de taller' : '· producción interna'}{' '}
             {out.settlementId && <Badge tone="success">Liquidado</Badge>}
@@ -602,17 +608,17 @@ function OutputsTab({ o, active, reasons, onDone }: { o: Detail; active: boolean
         </Card>
       ))}
       {active && can('production.qc') && !creating && (
-        <div><Button onClick={() => { setCreating(true); setRows({}); setDispatchId(openDispatches[0]?.id ?? ''); }}>Registrar ingreso con control de calidad</Button></div>
+        <div><Button data-tour="op-ingresos-nuevo" onClick={() => { setCreating(true); setRows({}); setDispatchId(openDispatches[0]?.id ?? ''); }}>Registrar ingreso con control de calidad</Button></div>
       )}
       {creating && (
         <Card className="p-4">
-          <Field label="Origen" htmlFor="src" className="mb-3 max-w-md">
+          <Field tour="op-ingresos-origen" label="Origen" htmlFor="src" className="mb-3 max-w-md">
             <Select id="src" value={dispatchId} onChange={(e) => { setDispatchId(e.target.value); setRows({}); }}>
               <option value="">Producción interna</option>
               {openDispatches.map((d) => <option key={d.id} value={d.id}>Recepción de {d.workshop?.legalName} ({d.number})</option>)}
             </Select>
           </Field>
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto" data-tour="op-ingresos-tabla">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border text-xs text-muted uppercase">
@@ -656,7 +662,7 @@ function OutputsTab({ o, active, reasons, onDone }: { o: Detail; active: boolean
             Solo las aprobadas ingresan a producto terminado. {dispatchId ? 'Al confirmar se consume del depósito del taller el material que indica la ficha para estas prendas.' : ''}
           </p>
           <div className="mt-3 flex gap-2">
-            <Button disabled={!lines.length} loading={output.isPending} onClick={() => output.mutate({ dispatchId: dispatchId || null, lines })}>Confirmar ingreso</Button>
+            <Button data-tour="op-ingresos-confirmar" disabled={!lines.length} loading={output.isPending} onClick={() => output.mutate({ dispatchId: dispatchId || null, lines })}>Confirmar ingreso</Button>
             <Button variant="secondary" onClick={() => setCreating(false)}>Cancelar</Button>
           </div>
         </Card>
@@ -668,7 +674,7 @@ function OutputsTab({ o, active, reasons, onDone }: { o: Detail; active: boolean
 
 function CostsTab({ o }: { o: Detail }) {
   return (
-    <Card className="overflow-x-auto">
+    <Card className="overflow-x-auto" tour="op-costos-tabla">
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-border bg-surface-2/60 text-xs text-muted uppercase">

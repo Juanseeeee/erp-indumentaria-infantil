@@ -50,6 +50,7 @@ export default function PurchaseRequestsPage() {
         actions={
           can('purchasing.order') && (
             <Button
+              data-tour="sc-generar-oc"
               disabled={!selected.length || selectedSuppliers.size > 1}
               title={selectedSuppliers.size > 1 ? 'Elegí líneas de un solo proveedor' : undefined}
               onClick={() => router.push(`/compras/ordenes/nueva?lineas=${selected.join(',')}${[...selectedSuppliers][0] ? `&proveedor=${[...selectedSuppliers][0]}` : ''}`)}
@@ -59,7 +60,7 @@ export default function PurchaseRequestsPage() {
           )
         }
       />
-      <Select aria-label="Estado" className="mb-3 w-48" value={status} onChange={(e) => setStatus(e.target.value)}>
+      <Select data-tour="sc-filtro-estado" aria-label="Estado" className="mb-3 w-48" value={status} onChange={(e) => setStatus(e.target.value)}>
         <option value="OPEN">Abiertas</option>
         <option value="ORDERED">Con orden de compra</option>
         <option value="">Todas</option>
@@ -67,7 +68,7 @@ export default function PurchaseRequestsPage() {
       {!data?.length && <Card><EmptyState icon={<Inbox className="size-8" />} title="Sin solicitudes" description="Al liberar una orden de producción con faltantes, podés pedirlos desde la orden." /></Card>}
       <div className="flex flex-col gap-3">
         {data?.map((r) => (
-          <Card key={r.id}>
+          <Card key={r.id} tour="sc-solicitud">
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-3 text-sm">
               <span>
                 <strong>{r.number}</strong> · {ORIGIN[r.origin]}
@@ -76,14 +77,14 @@ export default function PurchaseRequestsPage() {
               </span>
               <span className="flex items-center gap-2">
                 <Badge tone={r.status === 'OPEN' ? 'warning' : r.status === 'ORDERED' ? 'success' : 'neutral'}>{r.status === 'OPEN' ? 'Abierta' : r.status === 'ORDERED' ? 'Pedida' : 'Cancelada'}</Badge>
-                {r.status === 'OPEN' && can('purchasing.order') && <Button size="sm" variant="ghost" onClick={() => cancel.mutate(r.id)}>Cancelar</Button>}
+                {r.status === 'OPEN' && can('purchasing.order') && <Button data-tour="sc-cancelar" size="sm" variant="ghost" onClick={() => cancel.mutate(r.id)}>Cancelar</Button>}
               </span>
             </div>
             <ul>
               {r.lines.map((l) => (
                 <li key={l.id} className="flex items-center gap-3 border-b border-border px-4 py-2 text-sm last:border-0">
                   {r.status === 'OPEN' && !l.poLineId && (
-                    <input type="checkbox" aria-label="Seleccionar" checked={selected.includes(l.id)} onChange={(e) => setSelected((s) => (e.target.checked ? [...s, l.id] : s.filter((x) => x !== l.id)))} />
+                    <input data-tour="sc-casilla" type="checkbox" aria-label="Seleccionar" checked={selected.includes(l.id)} onChange={(e) => setSelected((s) => (e.target.checked ? [...s, l.id] : s.filter((x) => x !== l.id)))} />
                   )}
                   <span className="flex-1">{r.items.find((i) => i.id === l.itemId)?.name}</span>
                   <span className="text-muted">{r.parties.find((p) => p.id === l.supplierId)?.legalName ?? 'Sin proveedor habitual'}</span>

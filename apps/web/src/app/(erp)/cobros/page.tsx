@@ -48,7 +48,7 @@ export default function ReceiptsPage() {
       <PageHeader
         title="Cobros"
         description="Recibos de clientes. Cada cobro imputado a una factura devenga la comisión del vendedor."
-        actions={<Can perm="receivables.collect"><LinkButton href="/cobros/nuevo"><Plus className="size-4" /> Nuevo cobro</LinkButton></Can>}
+        actions={<Can perm="receivables.collect"><LinkButton href="/cobros/nuevo" tour="cobros-nuevo"><Plus className="size-4" /> Nuevo cobro</LinkButton></Can>}
       />
       <DataTable
         id="receipts"

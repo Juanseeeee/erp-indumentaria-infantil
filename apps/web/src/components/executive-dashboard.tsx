@@ -44,12 +44,12 @@ export function ExecutiveDashboard() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3" data-tour="ejec-indicadores">
         {ORDER.map((key) => <KpiTile key={key} metric={key} kpi={data.kpis[key]} />)}
       </div>
 
       <div className="grid gap-4 xl:grid-cols-[3fr_2fr]">
-        <Card className="min-w-0 p-4">
+        <Card className="min-w-0 p-4" tour="ejec-flujo">
           <div className="flex items-baseline justify-between gap-2">
             <h2 className="font-medium">Flujo proyectado a 8 semanas</h2>
             <Link href="/flujo-de-fondos" className="text-sm text-accent underline">Ver detalle</Link>
@@ -62,7 +62,7 @@ export function ExecutiveDashboard() {
           </p>
         </Card>
 
-        <Card className="p-4">
+        <Card className="p-4" tour="ejec-atencion">
           <h2 className="mb-2 flex items-center gap-2 font-medium">
             <AlertTriangle className={`size-4 ${attentionCount ? 'text-warning' : 'text-muted'}`} aria-hidden /> Atención
           </h2>
@@ -88,15 +88,15 @@ export function ExecutiveDashboard() {
       </div>
 
       <div className="grid gap-4 lg:grid-cols-3">
-        <Card className="p-4">
+        <Card className="p-4" tour="ejec-top-modelos">
           <h2 className="mb-2 font-medium">Top 10 modelos <span className="text-sm font-normal text-muted">(facturado, últimos 30 días)</span></h2>
           <RankList rows={data.topProducts.map((p) => ({ key: p.id, label: p.name, value: fmtMoney(p.net), hint: `${fmtQty(p.units)} u.` }))} empty="Sin ventas en los últimos 30 días." />
         </Card>
-        <Card className="p-4">
+        <Card className="p-4" tour="ejec-sin-ventas">
           <h2 className="mb-2 font-medium">Sin ventas en 90 días <span className="text-sm font-normal text-muted">(con stock)</span></h2>
           <RankList rows={data.idleProducts.map((p) => ({ key: p.id, label: p.name, value: `${fmtQty(p.units)} u.` }))} empty="Todos los modelos con stock se vendieron en los últimos 90 días." />
         </Card>
-        <Card className="p-4">
+        <Card className="p-4" tour="ejec-produccion">
           <h2 className="mb-2 font-medium">Producción en curso</h2>
           {data.production.length ? (
             <ul className="flex flex-col gap-2 text-sm">

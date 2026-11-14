@@ -45,9 +45,9 @@ export default function ReceiptPage({ params }: { params: Promise<{ id: string }
     <div className="max-w-3xl">
       <div className="print-hide mb-4 flex items-center gap-2">
         {r.status === 'VOIDED' ? <Badge tone="danger">Anulado</Badge> : !isZero(r.unapplied) && <Badge tone="warning">Sin imputar {fmtMoney(r.unapplied)}</Badge>}
-        <div className="ml-auto flex gap-2">
-          {r.status === 'POSTED' && !isZero(r.unapplied) && <Link href={`/cuentas-a-cobrar/${r.customer?.id}`}><Button variant="secondary">Imputar saldo</Button></Link>}
-          {r.status === 'POSTED' && <Can perm="receivables.collect"><Button variant="secondary" onClick={() => setVoiding(true)}>Anular</Button></Can>}
+        <div className="ml-auto flex gap-2" data-tour="cobro-detalle-acciones">
+          {r.status === 'POSTED' && !isZero(r.unapplied) && <Link href={`/cuentas-a-cobrar/${r.customer?.id}`}><Button data-tour="cobro-detalle-imputar-saldo" variant="secondary">Imputar saldo</Button></Link>}
+          {r.status === 'POSTED' && <Can perm="receivables.collect"><Button data-tour="cobro-detalle-anular" variant="secondary" onClick={() => setVoiding(true)}>Anular</Button></Can>}
           <PrintButton />
         </div>
       </div>
@@ -66,7 +66,7 @@ export default function ReceiptPage({ params }: { params: Promise<{ id: string }
           />
         </div>
       )}
-      <Card className="p-6">
+      <Card className="p-6" tour="cobro-detalle-recibo">
         <DocHeader company={r.company} title="Recibo" number={r.number} meta={<p className="text-muted">Fecha {fmtDate(r.date)}</p>} />
         <div className="my-4 text-sm">
           <p>Recibimos de <span className="font-medium">{r.customer?.legalName}</span> (CUIT {r.customer?.taxId}, {TAX_CONDITION_LABELS[r.customer?.taxCondition ?? '']}) la suma de <span className="num font-semibold">{fmtMoney(r.total)}</span>.</p>

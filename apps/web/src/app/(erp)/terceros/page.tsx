@@ -83,7 +83,7 @@ function PartiesList() {
         description={desc}
         actions={
           <Can perm="parties.create">
-            <LinkButton href={`/terceros/nuevo${role ? `?rol=${role}` : ''}`}>
+            <LinkButton href={`/terceros/nuevo${role ? `?rol=${role}` : ''}`} tour="terceros-nuevo">
               <Plus className="size-4" /> Nuevo
             </LinkButton>
           </Can>
@@ -106,7 +106,7 @@ function PartiesList() {
         loading={isLoading}
         onRowClick={(r) => router.push(`/terceros/${r.id}`)}
         toolbar={
-          <label className="flex items-center gap-2 text-sm">
+          <label data-tour="terceros-inactivos" className="flex items-center gap-2 text-sm">
             <input type="checkbox" checked={includeInactive} onChange={(e) => setIncludeInactive(e.target.checked)} /> Incluir inactivos
           </label>
         }

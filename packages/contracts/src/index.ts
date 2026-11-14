@@ -6,3 +6,4 @@ export * from './finance';
 export * from './metrics';
 export * from './reports';
 export * from './alerts';
+export * from './tours';

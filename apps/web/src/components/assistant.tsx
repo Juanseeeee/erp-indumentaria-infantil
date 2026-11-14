@@ -4,16 +4,26 @@ import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowUp, RotateCcw, Sparkles, Square, X } from 'lucide-react';
+import { ArrowLeft, ArrowUp, Compass, RotateCcw, Sparkles, Square, X } from 'lucide-react';
+import { TOURS, canTakeTour, type Tour } from '@erp/contracts';
 import { api } from '@/lib/api';
 import { cn } from '@/lib/format';
+import { useMe } from '@/lib/session';
+import { useTour } from './tour';
 
 interface Msg {
   role: 'user' | 'assistant';
   content: string;
   error?: boolean;
+  /** Recorridos guiados relacionados con la pregunta (los elige el servidor). */
+  tours?: { id: string; title: string }[];
 }
-type ServerEvent = { type: 'text'; text: string } | { type: 'tool'; label: string } | { type: 'done' } | { type: 'error'; message: string };
+type ServerEvent =
+  | { type: 'text'; text: string }
+  | { type: 'tool'; label: string }
+  | { type: 'tours'; tours: { id: string; title: string }[] }
+  | { type: 'done' }
+  | { type: 'error'; message: string };
 
 const STORAGE_KEY = 'erp-assistant-chat';
 
@@ -46,6 +56,12 @@ export function AssistantPanel({ open, onClose }: { open: boolean; onClose: () =
   const abortRef = useRef<AbortController | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const [view, setView] = useState<'chat' | 'tours'>('chat');
+  const tour = useTour();
+  const startTour = (id: string) => {
+    tour.start(id);
+    onClose();
+  };
 
   // La conversación dura lo que la pestaña (no se guarda en el servidor).
   useEffect(() => {
@@ -130,6 +146,8 @@ export function AssistantPanel({ open, onClose }: { open: boolean; onClose: () =
           } else if (ev.type === 'tool') {
             setActivity(ev.label);
             append((m) => (m.content && !m.content.endsWith('\n') ? { ...m, content: m.content + '\n\n' } : m));
+          } else if (ev.type === 'tours') {
+            append((m) => ({ ...m, tours: ev.tours }));
           } else if (ev.type === 'error') {
             append((m) => ({ ...m, content: (m.content ? m.content + '\n\n' : '') + ev.message, error: true }));
           }
@@ -177,7 +195,16 @@ export function AssistantPanel({ open, onClose }: { open: boolean; onClose: () =
             </span>
           )}
         </span>
-        {messages.length > 0 && (
+        <button
+          onClick={() => setView((v) => (v === 'tours' ? 'chat' : 'tours'))}
+          aria-pressed={view === 'tours'}
+          className={cn('rounded-md p-2 hover:bg-surface-2 hover:text-text', view === 'tours' ? 'text-accent' : 'text-muted')}
+          title="Recorridos guiados"
+          aria-label="Recorridos guiados"
+        >
+          <Compass className="size-4" />
+        </button>
+        {messages.length > 0 && view === 'chat' && (
           <button onClick={reset} className="rounded-md p-2 text-muted hover:bg-surface-2 hover:text-text" title="Nueva conversación" aria-label="Nueva conversación">
             <RotateCcw className="size-4" />
           </button>
@@ -187,6 +214,10 @@ export function AssistantPanel({ open, onClose }: { open: boolean; onClose: () =
         </button>
       </header>
 
+      {view === 'tours' ? (
+        <TourList onBack={() => setView('chat')} onStart={startTour} />
+      ) : (
+      <>
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-4" aria-live="polite">
         {messages.length === 0 ? (
           <div className="flex flex-col gap-4">
@@ -211,6 +242,16 @@ export function AssistantPanel({ open, onClose }: { open: boolean; onClose: () =
                 ))}
               </div>
             )}
+            <button
+              onClick={() => setView('tours')}
+              className="flex items-center gap-3 rounded-md border border-accent/40 bg-accent-soft px-3 py-2.5 text-left text-sm hover:border-accent"
+            >
+              <Compass className="size-5 shrink-0 text-accent" aria-hidden />
+              <span>
+                <span className="block font-medium">Recorridos guiados</span>
+                <span className="block text-xs text-muted">Te llevo por las pantallas y te marco dónde tocar, paso a paso.</span>
+              </span>
+            </button>
           </div>
         ) : (
           <ul className="flex flex-col gap-4">
@@ -225,6 +266,20 @@ export function AssistantPanel({ open, onClose }: { open: boolean; onClose: () =
                 ) : (
                   <div className={cn('w-full text-sm leading-relaxed', m.error && 'text-danger')}>
                     {m.content ? <Markdown text={m.content} onNavigate={() => window.innerWidth < 640 && onClose()} onAsk={(q) => void send(q)} /> : null}
+                    {m.tours?.length && !(busy && i === messages.length - 1) ? (
+                      <div className="mt-3 flex flex-col gap-1.5">
+                        {m.tours.map((t) => (
+                          <button
+                            key={t.id}
+                            onClick={() => startTour(t.id)}
+                            className="flex items-center gap-2 rounded-md border border-accent/40 bg-accent-soft px-3 py-2 text-left text-sm font-medium text-accent hover:border-accent"
+                          >
+                            <Compass className="size-4 shrink-0" aria-hidden />
+                            Guiame paso a paso: {t.title}
+                          </button>
+                        ))}
+                      </div>
+                    ) : null}
                     {busy && i === messages.length - 1 && activity && (
                       <p className="mt-1 flex items-center gap-2 text-xs text-muted">
                         <span className="inline-block size-1.5 animate-pulse rounded-full bg-accent" aria-hidden />
@@ -280,7 +335,64 @@ export function AssistantPanel({ open, onClose }: { open: boolean; onClose: () =
             : 'Respuestas generadas por IA: revisá los datos antes de confirmar una operación. El asistente no realiza cambios.'}
         </p>
       </form>
+      </>
+      )}
     </aside>
+  );
+}
+
+/** Listado de recorridos guiados que el usuario puede hacer, por área, con búsqueda. */
+function TourList({ onBack, onStart }: { onBack: () => void; onStart: (id: string) => void }) {
+  const { data: me } = useMe();
+  const [q, setQ] = useState('');
+  const norm = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  const words = norm(q).split(/\s+/).filter(Boolean);
+  const available = TOURS.filter((t) => canTakeTour(t, me?.permissions ?? []));
+  const shown = available.filter((t) => {
+    const hay = norm([t.title, t.description, t.area, ...t.keywords].join(' '));
+    return words.every((w) => hay.includes(w));
+  });
+  const areas = [...new Set(shown.map((t) => t.area))];
+  return (
+    <div className="flex flex-1 flex-col overflow-hidden">
+      <div className="border-b border-border p-3">
+        <button onClick={onBack} className="mb-2 flex items-center gap-1 text-xs text-muted hover:text-text">
+          <ArrowLeft className="size-3.5" aria-hidden /> Volver al chat
+        </button>
+        <p className="text-sm font-medium">Recorridos guiados</p>
+        <p className="mt-0.5 text-xs text-muted">Elegí una tarea: te llevo a cada pantalla y te marco dónde tocar. Podés salir cuando quieras con Esc.</p>
+        <input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          autoFocus
+          placeholder="Buscar: venta, factura, stock, taller…"
+          aria-label="Buscar recorrido"
+          className="mt-2 h-9 w-full rounded-md border border-border bg-bg px-3 text-sm outline-none focus:border-accent"
+        />
+      </div>
+      <div className="flex-1 overflow-y-auto px-3 py-3">
+        {!shown.length && <p className="px-1 text-sm text-muted">{available.length ? 'No hay recorridos con esas palabras.' : 'Todavía no hay recorridos disponibles para tu usuario.'}</p>}
+        {areas.map((area) => (
+          <section key={area} className="mb-4">
+            <p className="mb-1 px-1 text-[11px] font-medium tracking-wide text-muted uppercase">{area}</p>
+            <ul className="flex flex-col gap-1">
+              {shown
+                .filter((t) => t.area === area)
+                .map((t: Tour) => (
+                  <li key={t.id}>
+                    <button onClick={() => onStart(t.id)} className="w-full rounded-md px-2 py-2 text-left hover:bg-surface-2">
+                      <span className="block text-sm font-medium">{t.title}</span>
+                      <span className="block text-xs text-muted">
+                        {t.description} · {t.steps.length} pasos
+                      </span>
+                    </button>
+                  </li>
+                ))}
+            </ul>
+          </section>
+        ))}
+      </div>
+    </div>
   );
 }
 

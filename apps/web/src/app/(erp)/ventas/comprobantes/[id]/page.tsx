@@ -92,19 +92,19 @@ export default function SalesDocumentPage({ params }: { params: Promise<{ id: st
 
   return (
     <div className="max-w-4xl">
-      <div className="print-hide mb-4 flex flex-wrap items-center gap-2">
+      <div className="print-hide mb-4 flex flex-wrap items-center gap-2" data-tour="comprobante-detalle-estado">
         <Badge tone={stTone}>{stLabel}</Badge>
         {d.openAmount !== null && isInvoice && <Badge tone={isZero(d.openAmount) ? 'success' : 'warning'}>{isZero(d.openAmount) ? 'Cancelada' : `Pendiente ${fmtMoney(d.openAmount)}`}</Badge>}
-        <div className="ml-auto flex flex-wrap gap-2">
-          {d.status === 'PENDING_AUTH' && <Can perm="sales.invoice"><Button loading={retry.isPending} onClick={() => retry.mutate()}>Reintentar autorización</Button></Can>}
+        <div className="ml-auto flex flex-wrap gap-2" data-tour="comprobante-detalle-acciones">
+          {d.status === 'PENDING_AUTH' && <Can perm="sales.invoice"><Button data-tour="comprobante-detalle-reintentar" loading={retry.isPending} onClick={() => retry.mutate()}>Reintentar autorización</Button></Can>}
           {isInvoice && d.status === 'POSTED' && (
             <Can perm="sales.invoice">
-              <Button variant="secondary" onClick={() => { setPanel('NC'); setReason(''); }}>Nota de crédito</Button>
-              <Button variant="secondary" onClick={() => { setPanel('ND'); setReason(''); }}>Nota de débito</Button>
+              <Button data-tour="comprobante-detalle-nc" variant="secondary" onClick={() => { setPanel('NC'); setReason(''); }}>Nota de crédito</Button>
+              <Button data-tour="comprobante-detalle-nd" variant="secondary" onClick={() => { setPanel('ND'); setReason(''); }}>Nota de débito</Button>
             </Can>
           )}
           {isInvoice && d.status === 'POSTED' && d.openAmount && !isZero(d.openAmount) && (
-            <Can perm="receivables.collect"><Button variant="secondary" onClick={() => (window.location.href = `/cobros/nuevo?cliente=${d.party?.id}`)}>Cobrar</Button></Can>
+            <Can perm="receivables.collect"><Button data-tour="comprobante-detalle-cobrar" variant="secondary" onClick={() => (window.location.href = `/cobros/nuevo?cliente=${d.party?.id}`)}>Cobrar</Button></Can>
           )}
           <PrintButton />
         </div>
@@ -118,12 +118,12 @@ export default function SalesDocumentPage({ params }: { params: Promise<{ id: st
       )}
 
       {panel && (
-        <Card className="print-hide mb-4 p-4">
+        <Card className="print-hide mb-4 p-4" tour="comprobante-nota-panel">
           <p className="mb-3 font-medium">{panel === 'NC' ? 'Nota de crédito sobre esta factura' : 'Nota de débito sobre esta factura'}</p>
           {panel === 'NC' && (
             <>
               <p className="mb-2 text-sm text-muted">Indicá las cantidades que se acreditan (devolución o anulación parcial) y/o una bonificación sin mercadería.</p>
-              <table className="mb-3 w-full text-sm">
+              <table className="mb-3 w-full text-sm" data-tour="comprobante-nc-cantidades">
                 <tbody>
                   {d.lines.filter((l) => l.itemId).map((l) => {
                     const left = dec(l.qty).minus(l.creditedQty);
@@ -139,7 +139,7 @@ export default function SalesDocumentPage({ params }: { params: Promise<{ id: st
                   })}
                 </tbody>
               </table>
-              <Field label="Reingresar la mercadería devuelta a" htmlFor="restock" className="mb-3 max-w-sm" hint="Vacío = sin devolución física (solo ajuste de precio o cantidad)">
+              <Field tour="comprobante-nc-reingreso" label="Reingresar la mercadería devuelta a" htmlFor="restock" className="mb-3 max-w-sm" hint="Vacío = sin devolución física (solo ajuste de precio o cantidad)">
                 <Select id="restock" value={restock} onChange={(e) => setRestock(e.target.value)}>
                   <option value="">No reingresa</option>
                   {md?.warehouses.filter((w) => w.isActive && w.type !== 'WORKSHOP').map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
@@ -147,7 +147,7 @@ export default function SalesDocumentPage({ params }: { params: Promise<{ id: st
               </Field>
             </>
           )}
-          <div className="grid gap-3 sm:grid-cols-[1fr_140px_100px]">
+          <div className="grid gap-3 sm:grid-cols-[1fr_140px_100px]" data-tour="comprobante-nota-concepto">
             <Field label={panel === 'NC' ? 'Bonificación (concepto)' : 'Concepto'} htmlFor="cdesc"><Input id="cdesc" value={concept.description} onChange={(e) => setConcept({ ...concept, description: e.target.value })} /></Field>
             <Field label="Neto" htmlFor="cnet"><Input id="cnet" className="num text-right" inputMode="decimal" value={concept.net} onChange={(e) => setConcept({ ...concept, net: e.target.value.replace(',', '.') })} /></Field>
             <Field label="IVA %" htmlFor="cvat">
@@ -156,15 +156,15 @@ export default function SalesDocumentPage({ params }: { params: Promise<{ id: st
               </Select>
             </Field>
           </div>
-          <Field label="Motivo" htmlFor="ncreason" className="mt-3"><Input id="ncreason" value={reason} onChange={(e) => setReason(e.target.value)} /></Field>
+          <Field label="Motivo" htmlFor="ncreason" className="mt-3" tour="comprobante-nota-motivo"><Input id="ncreason" value={reason} onChange={(e) => setReason(e.target.value)} /></Field>
           <div className="mt-3 flex gap-2">
-            <Button loading={nc.isPending || nd.isPending} disabled={reason.trim().length < 3} onClick={() => (panel === 'NC' ? nc.mutate() : nd.mutate())}>Emitir</Button>
+            <Button data-tour="comprobante-nota-emitir" loading={nc.isPending || nd.isPending} disabled={reason.trim().length < 3} onClick={() => (panel === 'NC' ? nc.mutate() : nd.mutate())}>Emitir</Button>
             <Button variant="secondary" onClick={() => setPanel(null)}>Cancelar</Button>
           </div>
         </Card>
       )}
 
-      <Card className="p-6">
+      <Card className="p-6" tour="comprobante-detalle-documento">
         <DocHeader
           company={d.company}
           title={d.label}
@@ -232,7 +232,7 @@ export default function SalesDocumentPage({ params }: { params: Promise<{ id: st
       </Card>
 
       {(d.children.length > 0 || d.allocations.length > 0) && (
-        <Card className="print-hide mt-4 p-4 text-sm">
+        <Card className="print-hide mt-4 p-4 text-sm" tour="comprobante-detalle-imputaciones">
           {d.children.length > 0 && (
             <>
               <p className="mb-1 font-medium">Notas asociadas</p>

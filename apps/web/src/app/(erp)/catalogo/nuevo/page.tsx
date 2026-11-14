@@ -49,19 +49,19 @@ export default function NewProductPage() {
       <PageHeader title="Nuevo modelo" description="Al guardar se generan automáticamente todas las combinaciones de talle y color." />
       <form onSubmit={form.handleSubmit((v) => create.mutate(v))} className="flex flex-col gap-4" noValidate>
         <Card className="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2">
-          <Field label="Código del modelo" htmlFor="code" error={err.code?.message} hint="Se usa como prefijo del SKU. Ej.: BODY-ML">
+          <Field tour="modelo-codigo" label="Código del modelo" htmlFor="code" error={err.code?.message} hint="Se usa como prefijo del SKU. Ej.: BODY-ML">
             <Input id="code" autoFocus {...form.register('code')} onChange={(e) => form.setValue('code', e.target.value.toUpperCase())} />
           </Field>
-          <Field label="Nombre comercial" htmlFor="name" error={err.name?.message}>
+          <Field tour="modelo-nombre" label="Nombre comercial" htmlFor="name" error={err.name?.message}>
             <Input id="name" {...form.register('name')} placeholder="Body manga larga" />
           </Field>
-          <Field label="Categoría" htmlFor="cat">
+          <Field tour="modelo-categoria" label="Categoría" htmlFor="cat">
             <Select id="cat" {...form.register('categoryId', { setValueAs: (v) => v || null })}>
               <option value="">Sin categoría</option>
               {md.categories.filter((c) => c.kind === 'PRODUCT').map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
             </Select>
           </Field>
-          <Field label="Colección" htmlFor="col">
+          <Field tour="modelo-coleccion" label="Colección" htmlFor="col">
             <Select id="col" {...form.register('collectionId', { setValueAs: (v) => v || null })}>
               <option value="">Sin colección</option>
               {md.collections.map((c) => (
@@ -71,10 +71,10 @@ export default function NewProductPage() {
               ))}
             </Select>
           </Field>
-          <Field label="Material principal" htmlFor="mat" hint="Descriptivo. La ficha técnica se arma en Producción.">
+          <Field tour="modelo-material" label="Material principal" htmlFor="mat" hint="Descriptivo. La ficha técnica se arma en Producción.">
             <Input id="mat" {...form.register('materialText')} placeholder="Interlock 100% algodón" />
           </Field>
-          <Field label="Estado" htmlFor="status">
+          <Field tour="modelo-estado" label="Estado" htmlFor="status">
             <Select id="status" {...form.register('status')}>
               <option value="ACTIVE">Activo</option>
               <option value="DRAFT">Borrador</option>
@@ -86,7 +86,7 @@ export default function NewProductPage() {
         </Card>
 
         <Card className="flex flex-col gap-4 p-4">
-          <Field label="Escala de talles" htmlFor="scale" error={err.sizeScaleId?.message}>
+          <Field tour="modelo-escala" label="Escala de talles" htmlFor="scale" error={err.sizeScaleId?.message}>
             <Select id="scale" {...form.register('sizeScaleId', { onChange: () => form.setValue('sizeIds', undefined) })}>
               <option value="">Elegí una escala…</option>
               {md.sizeScales.map((s) => (
@@ -101,7 +101,7 @@ export default function NewProductPage() {
               control={form.control}
               name="sizeIds"
               render={({ field }) => (
-                <fieldset>
+                <fieldset data-tour="modelo-talles">
                   <legend className="mb-2 text-sm font-medium">Talles a generar</legend>
                   <div className="flex flex-wrap gap-2">
                     {scale.sizes.map((s) => {
@@ -131,7 +131,7 @@ export default function NewProductPage() {
             control={form.control}
             name="colorIds"
             render={({ field }) => (
-              <fieldset>
+              <fieldset data-tour="modelo-colores">
                 <legend className="mb-2 text-sm font-medium">Colores</legend>
                 <div className="flex flex-wrap gap-2">
                   {md.colors.filter((c) => c.isActive).map((c) => {
@@ -154,14 +154,14 @@ export default function NewProductPage() {
               </fieldset>
             )}
           />
-          <p className="rounded-md bg-surface-2 px-3 py-2 text-sm">
+          <p data-tour="modelo-resumen" className="rounded-md bg-surface-2 px-3 py-2 text-sm">
             Se van a generar <strong className="num">{sizesSelected * colorIds.length}</strong> variantes ({sizesSelected} talles × {colorIds.length} colores), cada
             una con su SKU y código de barras.
           </p>
         </Card>
 
         <div className="flex gap-2">
-          <Button type="submit" loading={create.isPending}>
+          <Button data-tour="modelo-crear" type="submit" loading={create.isPending}>
             Crear modelo
           </Button>
           <Button type="button" variant="secondary" onClick={() => router.back()}>

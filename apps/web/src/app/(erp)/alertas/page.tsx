@@ -64,15 +64,15 @@ export default function AlertsPage() {
       <PageHeader title="Alertas" description="Lo que necesita tu atención. Se revisan solas cada 15 minutos y se resuelven solas cuando la situación se normaliza." />
       <Tabs
         tabs={[
-          { id: 'abiertas', label: 'Abiertas' },
-          { id: 'resueltas', label: 'Resueltas' },
-          ...(manage ? [{ id: 'reglas', label: 'Reglas' }] : []),
+          { id: 'abiertas', label: 'Abiertas', tour: 'alertas-tab-abiertas' },
+          { id: 'resueltas', label: 'Resueltas', tour: 'alertas-tab-resueltas' },
+          ...(manage ? [{ id: 'reglas', label: 'Reglas', tour: 'alertas-tab-reglas' }] : []),
         ]}
         value={tab}
         onChange={setTab}
       />
       {manage && tab !== 'reglas' && (
-        <label className="mb-3 flex items-center gap-2 text-sm">
+        <label data-tour="alertas-ver-todos" className="mb-3 flex items-center gap-2 text-sm">
           <input type="checkbox" checked={everyone} onChange={(e) => setEveryone(e.target.checked)} /> Ver las alertas de todos los usuarios
         </label>
       )}
@@ -116,7 +116,7 @@ function AlertList({ status, scope }: { status: 'OPEN' | 'RESOLVED'; scope: 'min
     );
 
   return (
-    <ul className="flex flex-col gap-2" aria-label={status === 'OPEN' ? 'Alertas abiertas' : 'Alertas resueltas'}>
+    <ul data-tour="alertas-lista" className="flex flex-col gap-2" aria-label={status === 'OPEN' ? 'Alertas abiertas' : 'Alertas resueltas'}>
       {data.rows.map((a) => {
         const style = PRIORITY_STYLE[a.priority];
         const Icon = style.icon;
@@ -202,10 +202,10 @@ function RulesTab() {
   if (isLoading) return <Spinner />;
   if (error || !data) return <ErrorBox error={error} />;
   return (
-    <div className="flex flex-col gap-3">
+    <div className="flex flex-col gap-3" data-tour="alertas-reglas">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm text-muted">Cada regla avisa a los roles elegidos. Las alertas nuevas se mandan por correo en un resumen por persona.</p>
-        <Button variant="secondary" loading={evaluate.isPending} onClick={() => evaluate.mutate()}>
+        <Button data-tour="alertas-revisar-ahora" variant="secondary" loading={evaluate.isPending} onClick={() => evaluate.mutate()}>
           <RefreshCw className="size-4" aria-hidden /> Revisar ahora
         </Button>
       </div>

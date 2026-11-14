@@ -19,7 +19,7 @@ export default function ReportsPage() {
       <PageHeader title="Reportes" description="Los reportes que tu rol puede consultar. Cada uno se ve en pantalla y se descarga en Excel o PDF." />
       <div className="relative mb-4 max-w-sm">
         <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted" aria-hidden />
-        <Input aria-label="Buscar reporte" placeholder="Buscar reporte…" className="pl-9" value={search} onChange={(e) => setSearch(e.target.value)} />
+        <Input data-tour="reportes-buscar" aria-label="Buscar reporte" placeholder="Buscar reporte…" className="pl-9" value={search} onChange={(e) => setSearch(e.target.value)} />
       </div>
       {isLoading ? (
         <Spinner />
@@ -30,7 +30,7 @@ export default function ReportsPage() {
           <EmptyState icon={<FileSpreadsheet className="size-8" aria-hidden />} title="No hay reportes" description={term ? 'Ningún reporte coincide con la búsqueda.' : 'Tu rol no tiene reportes disponibles.'} />
         </Card>
       ) : (
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-6" data-tour="reportes-lista">
           {REPORT_CATEGORIES.map((category) => {
             const reports = visible.filter((r) => r.category === category);
             if (!reports.length) return null;

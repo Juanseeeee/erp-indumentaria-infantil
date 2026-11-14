@@ -63,16 +63,17 @@ export default function StockDocPage({ params }: { params: Promise<{ id: string 
   return (
     <div className="max-w-5xl">
       <PageHeader
+        tour="stockdoc-encabezado"
         title={`${DOC_TYPE_LABELS[doc.type]} ${doc.number}`}
         description={doc.targetWarehouseId ? `${wh(doc.warehouseId)} → ${wh(doc.targetWarehouseId)}` : wh(doc.warehouseId)}
         actions={
           <>
             <Badge tone={statusTone(doc.status)}>{DOC_STATUS_LABELS[doc.status]}</Badge>
             {doc.status === 'PENDING_APPROVAL' && can('inventory.adjust.approve') && doc.createdBy !== me?.user.id && (
-              <Button loading={approve.isPending} onClick={() => approve.mutate()}>Aprobar</Button>
+              <Button data-tour="stockdoc-aprobar" loading={approve.isPending} onClick={() => approve.mutate()}>Aprobar</Button>
             )}
             {doc.status !== 'VOIDED' && can(permByType[doc.type]) && !voiding && (
-              <Button variant="secondary" onClick={() => setVoiding(true)}>Anular</Button>
+              <Button data-tour="stockdoc-anular" variant="secondary" onClick={() => setVoiding(true)}>Anular</Button>
             )}
           </>
         }
@@ -101,7 +102,7 @@ export default function StockDocPage({ params }: { params: Promise<{ id: string 
           />
         </div>
       )}
-      <Card className="mb-4 grid grid-cols-2 gap-4 p-4 text-sm sm:grid-cols-4">
+      <Card className="mb-4 grid grid-cols-2 gap-4 p-4 text-sm sm:grid-cols-4" tour="stockdoc-datos">
         <div>
           <p className="text-muted">Creado</p>
           <p>{fmtDateTime(doc.createdAt)}</p>
@@ -153,7 +154,7 @@ export default function StockDocPage({ params }: { params: Promise<{ id: string 
         </table>
       </Card>
       <h2 className="mb-2 font-medium">Movimientos generados</h2>
-      <Card className="overflow-x-auto">
+      <Card className="overflow-x-auto" tour="stockdoc-movimientos">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border bg-surface-2/60 text-xs text-muted uppercase">

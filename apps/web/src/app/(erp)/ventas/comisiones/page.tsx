@@ -96,8 +96,8 @@ export default function CommissionsPage() {
     return (
       <div className="max-w-5xl">
         <PageHeader title="Mis comisiones" description="Se calculan sobre lo cobrado: cada cobro imputado a una factura tuya suma; si se revierte, resta." />
-        <div className="mb-4 grid gap-3 sm:grid-cols-3"><Stat label="Pendiente de liquidar" value={fmtMoney(total)} /></div>
-        <Card className="overflow-x-auto"><CommissionRows rows={mine.data?.rows ?? []} /></Card>
+        <div className="mb-4 grid gap-3 sm:grid-cols-3"><Stat label="Pendiente de liquidar" value={fmtMoney(total)} tour="comisiones-mis-pendiente" /></div>
+        <Card className="overflow-x-auto" tour="comisiones-mis-detalle"><CommissionRows rows={mine.data?.rows ?? []} /></Card>
       </div>
     );
   }
@@ -106,13 +106,13 @@ export default function CommissionsPage() {
     <div className="max-w-6xl">
       <PageHeader title="Comisiones" description="Regla confirmada: la comisión se calcula sobre lo cobrado (base sin IVA, configurable). Se devenga al imputar cada cobro a la factura." />
       <div className="mb-4 grid gap-4 lg:grid-cols-2">
-        <Card className="p-4">
+        <Card className="p-4" tour="comisiones-pendiente">
           <p className="mb-2 font-medium">Pendiente de liquidar</p>
           {!all.data?.summary.length ? <p className="text-sm text-muted">No hay comisiones pendientes.</p> : (
             <>
               <div className="mb-3 flex items-center gap-2 text-sm">
                 <span className="text-muted">Cobros hasta</span>
-                <Input type="date" aria-label="Liquidar hasta" className="w-44" value={periodTo} onChange={(e) => setPeriodTo(e.target.value)} />
+                <Input data-tour="comisiones-hasta" type="date" aria-label="Liquidar hasta" className="w-44" value={periodTo} onChange={(e) => setPeriodTo(e.target.value)} />
               </div>
               <ul className="text-sm">
                 {all.data.summary.map((s) => (
@@ -127,7 +127,7 @@ export default function CommissionsPage() {
             </>
           )}
         </Card>
-        <Card className="p-4">
+        <Card className="p-4" tour="comisiones-vendedores">
           <p className="mb-2 font-medium">Vendedores</p>
           {reps.isLoading ? <Spinner /> : (
             <table className="w-full text-sm">
@@ -149,7 +149,7 @@ export default function CommissionsPage() {
           )}
         </Card>
       </div>
-      <Card className="overflow-x-auto">
+      <Card className="overflow-x-auto" tour="comisiones-detalle">
         <div className="flex items-center gap-3 p-3">
           <p className="font-medium">Detalle</p>
           <label className="ml-auto flex items-center gap-2 text-sm"><input type="checkbox" checked={pending} onChange={(e) => setPending(e.target.checked)} /> Solo pendientes</label>

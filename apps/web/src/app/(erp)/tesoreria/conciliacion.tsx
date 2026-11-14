@@ -82,22 +82,22 @@ export function Reconciliation({ accounts }: { accounts: Account[] }) {
     <div className="flex flex-col gap-4">
       {upload.error && <ErrorBox error={upload.error} />}
       <Can perm="treasury.move">
-        <Card className="p-4">
+        <Card className="p-4" tour="conc-importar">
           <h2 className="mb-1 font-medium">Importar extracto</h2>
           <p className="mb-3 text-sm text-muted">
             CSV exportado del home banking, con columnas <strong>Fecha</strong> e <strong>Importe</strong> (o <strong>Débito</strong> y <strong>Crédito</strong>), y opcionalmente Concepto y Comprobante. Las líneas que ya se importaron se omiten.
           </p>
           {banks.length ? (
             <form className="flex flex-wrap items-end gap-3" onSubmit={submit}>
-              <Field label="Cuenta" htmlFor="st-account">
+              <Field label="Cuenta" htmlFor="st-account" tour="conc-cuenta">
                 <Select id="st-account" value={accountId} onChange={(e) => setSelected(e.target.value)}>
                   {banks.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
                 </Select>
               </Field>
-              <Field label="Archivo CSV" htmlFor="st-file">
+              <Field label="Archivo CSV" htmlFor="st-file" tour="conc-archivo">
                 <Input id="st-file" type="file" accept=".csv,.txt,text/csv,text/plain" required onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
               </Field>
-              <Button type="submit" loading={upload.isPending} disabled={!file}>Importar</Button>
+              <Button data-tour="conc-importar-boton" type="submit" loading={upload.isPending} disabled={!file}>Importar</Button>
             </form>
           ) : (
             <p className="text-sm text-muted">Creá una cuenta bancaria o billetera en la pestaña Cuentas.</p>
@@ -106,7 +106,7 @@ export function Reconciliation({ accounts }: { accounts: Account[] }) {
             <div className="mt-3 text-sm" role="status">
               <p>
                 Se importaron {result.lineCount} líneas{result.skippedCount ? ` (${result.skippedCount} ya estaban importadas)` : ''}.{' '}
-                <button type="button" className="font-medium text-accent underline" onClick={() => router.push(`/tesoreria/extractos/${result.id}`)}>Conciliar ahora</button>
+                <button data-tour="conc-conciliar-ahora" type="button" className="font-medium text-accent underline" onClick={() => router.push(`/tesoreria/extractos/${result.id}`)}>Conciliar ahora</button>
               </p>
               {result.errors.length > 0 && (
                 <ul className="mt-1 list-disc pl-5 text-warning">

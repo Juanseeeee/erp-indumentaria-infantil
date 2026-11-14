@@ -59,7 +59,7 @@ function NewInvoice() {
     <div className="max-w-4xl">
       <PageHeader title="Facturar remitos" description="Elegí uno o varios remitos del cliente: se emite una factura con todos (A o B según su condición frente al IVA)." />
       <Card className="mb-4 p-4">
-        <Field label="Cliente" htmlFor="customer">
+        <Field label="Cliente" htmlFor="customer" tour="factura-nueva-cliente">
           <Select id="customer" value={customerId} onChange={(e) => { setCustomerId(e.target.value); setSelected(new Set()); }}>
             <option value="">Elegí un cliente…</option>
             {customers.data?.rows.map((c) => <option key={c.id} value={c.id}>{c.legalName}</option>)}
@@ -69,7 +69,7 @@ function NewInvoice() {
       {customerId && (pending.isLoading ? <Spinner /> : !pending.data?.rows.length ? (
         <Card><EmptyState title="No hay remitos pendientes de facturar" description="Los remitos se emiten desde los pedidos confirmados." /></Card>
       ) : (
-        <Card className="mb-4 overflow-x-auto">
+        <Card className="mb-4 overflow-x-auto" tour="factura-nueva-remitos">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-surface-2/60 text-xs text-muted uppercase">
@@ -104,12 +104,12 @@ function NewInvoice() {
         </Card>
       ))}
       {selected.size > 0 && (
-        <Card className="flex flex-wrap items-center gap-6 p-4">
+        <Card className="flex flex-wrap items-center gap-6 p-4" tour="factura-nueva-resumen">
           <div className="text-sm">
             <p>{selected.size} remito(s) · Neto <span className="num">{fmtMoney(preview.net)}</span></p>
             <p className="text-base font-semibold">Total <span className="num">{fmtMoney(preview.total)}</span></p>
           </div>
-          <Button className="ml-auto" loading={emit.isPending} onClick={() => emit.mutate()}>Emitir factura</Button>
+          <Button data-tour="factura-nueva-emitir" className="ml-auto" loading={emit.isPending} onClick={() => emit.mutate()}>Emitir factura</Button>
         </Card>
       )}
     </div>

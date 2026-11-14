@@ -71,16 +71,17 @@ export default function ReceivableLedgerPage({ params }: { params: Promise<{ par
   return (
     <div className="max-w-5xl">
       <PageHeader
+        tour="cxc-cliente-encabezado"
         title={`Estado de cuenta · ${data.party?.legalName}`}
         description={`CUIT ${data.party?.taxId} · al ${fmtDate(todayISO())}`}
         actions={
           <div className="print-hide flex gap-2">
-            <Can perm="receivables.collect"><LinkButton href={`/cobros/nuevo?cliente=${partyId}`}>Nuevo cobro</LinkButton></Can>
+            <Can perm="receivables.collect"><LinkButton href={`/cobros/nuevo?cliente=${partyId}`} tour="cxc-cliente-nuevo-cobro">Nuevo cobro</LinkButton></Can>
             <PrintButton />
           </div>
         }
       />
-      <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+      <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-3" data-tour="cxc-cliente-antiguedad">
         <Stat label="Saldo" value={fmtMoney(data.balance)} />
         <Stat label="A vencer" value={fmtMoney(data.aging.current)} />
         <Stat label="1–30 días" value={fmtMoney(data.aging.d30)} tone={isZero(data.aging.d30) ? undefined : 'warning'} />
@@ -90,7 +91,7 @@ export default function ReceivableLedgerPage({ params }: { params: Promise<{ par
       </div>
 
       {credits.length > 0 && hasDebits && can('receivables.collect') && (
-        <Card className="print-hide mb-4 flex flex-wrap items-end gap-3 border-warning/40 p-4">
+        <Card className="print-hide mb-4 flex flex-wrap items-end gap-3 border-warning/40 p-4" tour="cxc-cliente-imputar">
           <div className="min-w-72 flex-1">
             <p className="text-sm font-medium">Hay {fmtMoney(data.unappliedCredits)} a favor del cliente sin imputar</p>
             <Select aria-label="Saldo a imputar" className="mt-2" value={creditId} onChange={(e) => setCreditId(e.target.value)}>
@@ -98,7 +99,7 @@ export default function ReceivableLedgerPage({ params }: { params: Promise<{ par
               {credits.map((c) => <option key={c.id} value={c.id}>{c.description} · {fmtMoney(c.openAmount.replace('-', ''))}</option>)}
             </Select>
           </div>
-          <Button disabled={!creditId} loading={allocate.isPending} onClick={() => allocate.mutate()}>Imputar por vencimiento</Button>
+          <Button data-tour="cxc-cliente-imputar-boton" disabled={!creditId} loading={allocate.isPending} onClick={() => allocate.mutate()}>Imputar por vencimiento</Button>
         </Card>
       )}
 
@@ -118,7 +119,7 @@ export default function ReceivableLedgerPage({ params }: { params: Promise<{ par
         </div>
       )}
 
-      <Card className="overflow-x-auto">
+      <Card className="overflow-x-auto" tour="cxc-cliente-movimientos">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border bg-surface-2/60 text-xs text-muted uppercase">
@@ -153,7 +154,7 @@ export default function ReceivableLedgerPage({ params }: { params: Promise<{ par
       <p className="mt-2 text-xs text-muted">Debe = facturas y notas de débito. Haber = cobros y notas de crédito. Pendiente = lo que falta imputar de cada comprobante.</p>
 
       {data.allocations.length > 0 && (
-        <Card className="print-hide mt-4 overflow-x-auto">
+        <Card className="print-hide mt-4 overflow-x-auto" tour="cxc-cliente-imputaciones">
           <p className="px-3 pt-3 font-medium">Imputaciones vigentes</p>
           <table className="w-full text-sm">
             <tbody>

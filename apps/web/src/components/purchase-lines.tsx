@@ -38,7 +38,7 @@ export function PurchaseLines({ lines, setLines, kind = 'MATERIAL' }: { lines: P
           }
         />
       </div>
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto" data-tour="compra-lineas-tabla">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-y border-border bg-surface-2/60 text-xs text-muted uppercase">

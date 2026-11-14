@@ -53,7 +53,7 @@ export default function MaterialsPage() {
         description="Telas, hilos, avíos y packaging. El stock y el kardex se consultan desde Stock."
         actions={
           <Can perm="materials.create">
-            <LinkButton href="/materiales/nuevo">
+            <LinkButton href="/materiales/nuevo" tour="materiales-nuevo">
               <Plus className="size-4" /> Nuevo material
             </LinkButton>
           </Can>
@@ -75,7 +75,7 @@ export default function MaterialsPage() {
         loading={isLoading}
         onRowClick={(r) => router.push(`/materiales/${r.itemId}`)}
         toolbar={
-          <Select aria-label="Categoría" className="w-44" value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
+          <Select data-tour="materiales-filtro-categoria" aria-label="Categoría" className="w-44" value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
             <option value="">Todas las categorías</option>
             {md?.categories.filter((c) => c.kind === 'MATERIAL').map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
           </Select>

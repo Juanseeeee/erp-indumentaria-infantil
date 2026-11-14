@@ -38,7 +38,7 @@ export default function ProductionConfigPage() {
   return (
     <div className="max-w-4xl">
       <PageHeader title="Configuración de producción" />
-      <Tabs value={tab} onChange={setTab} tabs={[{ id: 'tarifas', label: 'Tarifas de talleres' }, { id: 'etapas', label: 'Etapas' }, { id: 'fallas', label: 'Motivos de falla' }]} />
+      <Tabs value={tab} onChange={setTab} tabs={[{ id: 'tarifas', label: 'Tarifas de talleres', tour: 'prodcfg-tab-tarifas' }, { id: 'etapas', label: 'Etapas', tour: 'prodcfg-tab-etapas' }, { id: 'fallas', label: 'Motivos de falla', tour: 'prodcfg-tab-fallas' }]} />
       {tab === 'tarifas' && (
         <Card>
           <form
@@ -49,14 +49,14 @@ export default function ProductionConfigPage() {
               rate.mutate({ workshopId: f.get('w'), productId: f.get('p'), price: String(f.get('price')).replace(',', '.'), validFrom: f.get('from') });
             }}
           >
-            <Field label="Taller" htmlFor="w"><Select id="w" name="w" required>{data.workshops.map((w) => <option key={w.id} value={w.id}>{w.legalName}</option>)}</Select></Field>
-            <Field label="Modelo" htmlFor="p"><Select id="p" name="p" required>{products.data?.rows.map((p) => <option key={p.id} value={p.id}>{p.code} · {p.name}</option>)}</Select></Field>
-            <Field label="Precio por prenda ($)" htmlFor="price"><Input id="price" name="price" inputMode="decimal" className="w-32" required /></Field>
-            <Field label="Vigente desde" htmlFor="from"><Input id="from" name="from" type="date" defaultValue={todayISO()} required /></Field>
-            <Button type="submit" loading={rate.isPending}>Agregar tarifa</Button>
+            <Field tour="prodcfg-tarifa-taller" label="Taller" htmlFor="w"><Select id="w" name="w" required>{data.workshops.map((w) => <option key={w.id} value={w.id}>{w.legalName}</option>)}</Select></Field>
+            <Field tour="prodcfg-tarifa-modelo" label="Modelo" htmlFor="p"><Select id="p" name="p" required>{products.data?.rows.map((p) => <option key={p.id} value={p.id}>{p.code} · {p.name}</option>)}</Select></Field>
+            <Field tour="prodcfg-tarifa-precio" label="Precio por prenda ($)" htmlFor="price"><Input id="price" name="price" inputMode="decimal" className="w-32" required /></Field>
+            <Field tour="prodcfg-tarifa-desde" label="Vigente desde" htmlFor="from"><Input id="from" name="from" type="date" defaultValue={todayISO()} required /></Field>
+            <Button data-tour="prodcfg-tarifa-agregar" type="submit" loading={rate.isPending}>Agregar tarifa</Button>
           </form>
           <p className="px-4 pt-3 text-xs text-muted">El taller cobra por prenda terminada. Una tarifa nueva no pisa la anterior: cada recepción usa la vigente a su fecha.</p>
-          <ul className="mt-2">
+          <ul data-tour="prodcfg-tarifas-lista" className="mt-2">
             {data.rates.map((r) => (
               <li key={r.id} className="flex justify-between border-t border-border px-4 py-2 text-sm">
                 <span>{r.workshop?.legalName} · {r.product?.name}</span>
@@ -76,11 +76,11 @@ export default function ProductionConfigPage() {
               stage.mutate({ code: f.get('code'), name: f.get('name'), sortOrder: Number(f.get('order')), isExternal: f.get('ext') === 'on' });
             }}
           >
-            <Field label="Código" htmlFor="sc"><Input id="sc" name="code" className="w-28" required /></Field>
+            <Field tour="prodcfg-etapa-codigo" label="Código" htmlFor="sc"><Input id="sc" name="code" className="w-28" required /></Field>
             <Field label="Nombre" htmlFor="sn"><Input id="sn" name="name" required /></Field>
             <Field label="Orden" htmlFor="so"><Input id="so" name="order" type="number" className="w-20" defaultValue={data.stages.length + 1} /></Field>
-            <label className="flex items-center gap-2 pb-2 text-sm"><input type="checkbox" name="ext" /> La hace un taller</label>
-            <Button type="submit" loading={stage.isPending}>Guardar etapa</Button>
+            <label data-tour="prodcfg-etapa-taller" className="flex items-center gap-2 pb-2 text-sm"><input type="checkbox" name="ext" /> La hace un taller</label>
+            <Button data-tour="prodcfg-etapa-guardar" type="submit" loading={stage.isPending}>Guardar etapa</Button>
           </form>
           <ol>
             {data.stages.map((s) => (
@@ -95,8 +95,8 @@ export default function ProductionConfigPage() {
       {tab === 'fallas' && (
         <Card>
           <form className="flex items-end gap-3 border-b border-border p-4" onSubmit={(e) => { e.preventDefault(); defect.mutate({ name: new FormData(e.currentTarget).get('name') }); e.currentTarget.reset(); }}>
-            <Field label="Motivo" htmlFor="dn"><Input id="dn" name="name" required /></Field>
-            <Button type="submit" loading={defect.isPending}>Agregar</Button>
+            <Field tour="prodcfg-falla-motivo" label="Motivo" htmlFor="dn"><Input id="dn" name="name" required /></Field>
+            <Button data-tour="prodcfg-falla-agregar" type="submit" loading={defect.isPending}>Agregar</Button>
           </form>
           <ul>{data.defectReasons.map((r) => <li key={r.id} className="border-b border-border px-4 py-2 text-sm last:border-0">{r.name}</li>)}</ul>
         </Card>

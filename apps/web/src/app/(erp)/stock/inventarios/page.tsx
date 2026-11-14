@@ -39,25 +39,25 @@ export default function CountsPage() {
       <PageHeader title="Inventarios físicos" description="Al abrir un inventario se toma una foto del stock; al confirmarlo se ajustan solo las diferencias contadas." />
       {can('inventory.count') && (
         <Card className="mb-4 flex flex-wrap items-end gap-3 p-4">
-          <Field label="Depósito" htmlFor="cwh" className="min-w-56">
+          <Field label="Depósito" htmlFor="cwh" className="min-w-56" tour="stockinv-deposito">
             <Select id="cwh" value={warehouseId} onChange={(e) => setWarehouseId(e.target.value)}>
               <option value="">Elegí un depósito…</option>
               {md?.warehouses.filter((w) => w.isActive).map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
             </Select>
           </Field>
-          <Field label="Alcance" htmlFor="ckind">
+          <Field label="Alcance" htmlFor="ckind" tour="stockinv-alcance">
             <Select id="ckind" value={kind} onChange={(e) => setKind(e.target.value)}>
               <option value="">Todos los artículos</option>
               <option value="VARIANT">Solo prendas</option>
               <option value="MATERIAL">Solo materiales</option>
             </Select>
           </Field>
-          <Button disabled={!warehouseId} loading={create.isPending} onClick={() => create.mutate()}>
+          <Button data-tour="stockinv-abrir" disabled={!warehouseId} loading={create.isPending} onClick={() => create.mutate()}>
             Abrir inventario
           </Button>
         </Card>
       )}
-      <Card>
+      <Card tour="stockinv-lista">
         {data?.length ? (
           <ul>
             {data.map((c) => (

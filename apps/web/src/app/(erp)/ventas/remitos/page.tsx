@@ -64,7 +64,7 @@ export default function DeliveriesPage() {
         loading={isLoading}
         onRowClick={(r) => router.push(`/ventas/remitos/${r.id}`)}
         toolbar={
-          <Select aria-label="Filtro" className="w-56" value={filter} onChange={(e) => { setFilter(e.target.value); setPage(1); }}>
+          <Select aria-label="Filtro" data-tour="remitos-filtro" className="w-56" value={filter} onChange={(e) => { setFilter(e.target.value); setPage(1); }}>
             <option value="pending">Pendientes de facturar</option>
             <option value="all">Todos</option>
           </Select>

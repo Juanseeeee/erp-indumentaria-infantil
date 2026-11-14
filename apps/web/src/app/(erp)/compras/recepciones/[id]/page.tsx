@@ -35,10 +35,10 @@ export default function ReceiptPage({ params }: { params: Promise<{ id: string }
       <PageHeader
         title={`Recepción ${r.number}`}
         description={`${r.parties.find((p) => p.id === r.supplierId)?.legalName} · ${fmtDateTime(r.receivedAt)} · ${md?.warehouses.find((w) => w.id === r.warehouseId)?.name ?? ''}${r.supplierDeliveryNote ? ` · remito ${r.supplierDeliveryNote}` : ''}`}
-        actions={pendingInvoice && can('purchasing.invoice') && <LinkButton href={`/compras/comprobantes/nuevo?proveedor=${r.supplierId}`}>Cargar factura</LinkButton>}
+        actions={pendingInvoice && can('purchasing.invoice') && <LinkButton href={`/compras/comprobantes/nuevo?proveedor=${r.supplierId}`} tour="re-detalle-cargar-factura">Cargar factura</LinkButton>}
       />
       {r.purchaseOrder && <p className="mb-3 text-sm">Orden de compra: <Link className="text-accent hover:underline" href={`/compras/ordenes/${r.purchaseOrder.id}`}>{r.purchaseOrder.number}</Link></p>}
-      <Card className="overflow-x-auto">
+      <Card className="overflow-x-auto" tour="re-detalle-lineas">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border bg-surface-2/60 text-xs text-muted uppercase">

@@ -77,7 +77,7 @@ export default function ProductionOrdersPage() {
         description="Cada orden congela su ficha técnica al liberarse: reserva materiales, sigue sus etapas y termina con el costo real."
         actions={
           <Can perm="production.plan">
-            <LinkButton href="/produccion/ordenes/nueva">
+            <LinkButton href="/produccion/ordenes/nueva" tour="op-lista-nueva">
               <Plus className="size-4" /> Nueva orden
             </LinkButton>
           </Can>
@@ -100,7 +100,7 @@ export default function ProductionOrdersPage() {
         loading={isLoading}
         onRowClick={(r) => router.push(`/produccion/ordenes/${r.id}`)}
         toolbar={
-          <Select aria-label="Estado" className="w-48" value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }}>
+          <Select data-tour="op-lista-estado" aria-label="Estado" className="w-48" value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }}>
             <option value="ACTIVE">Activas</option>
             <option value="DRAFT">Borradores</option>
             <option value="CLOSED">Cerradas</option>

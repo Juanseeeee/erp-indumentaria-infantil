@@ -37,7 +37,7 @@ export default function ReceivablesPage() {
     <div className="max-w-5xl">
       <PageHeader title="Cuentas a cobrar" description="Saldos de clientes, lo vencido y los cobros sin imputar." />
       {data?.length ? (
-        <div className="mb-4 grid gap-3 sm:grid-cols-3">
+        <div className="mb-4 grid gap-3 sm:grid-cols-3" data-tour="cxc-indicadores">
           <Stat label="Total a cobrar" value={fmtMoney(sumCents(data.map((r) => r.balance)))} />
           <Stat label="Vencido" value={fmtMoney(sumCents(data.map((r) => r.overdue)))} tone="warning" />
           <Stat label="Vencido hace más de 60 días" value={fmtMoney(sumCents(data.map((r) => r.over60)))} tone="danger" />
@@ -46,7 +46,7 @@ export default function ReceivablesPage() {
       {!data?.length ? (
         <Card><EmptyState icon={<BookOpen className="size-8" />} title="Sin saldos de clientes" description="Las facturas emitidas y los cobros aparecen acá." /></Card>
       ) : (
-        <Card className="overflow-x-auto">
+        <Card className="overflow-x-auto" tour="cxc-clientes">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-surface-2/60 text-xs text-muted uppercase">

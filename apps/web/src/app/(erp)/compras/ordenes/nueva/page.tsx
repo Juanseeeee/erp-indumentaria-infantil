@@ -68,24 +68,24 @@ function NewPurchaseOrder() {
     <div className="max-w-5xl">
       <PageHeader title="Nueva orden de compra" description={requestLineIds.length ? `Generada desde ${requestLineIds.length} líneas de solicitudes de compra.` : undefined} />
       <Card className="mb-4 grid grid-cols-1 gap-4 p-4 sm:grid-cols-3">
-        <Field label="Proveedor" htmlFor="sup">
+        <Field label="Proveedor" htmlFor="sup" tour="oc-nueva-proveedor">
           <Select id="sup" value={supplierId} onChange={(e) => setSupplierId(e.target.value)}>
             <option value="">Elegí…</option>
             {suppliers.data?.rows.map((s) => <option key={s.id} value={s.id}>{s.legalName}</option>)}
           </Select>
         </Field>
-        <Field label="Recibir en" htmlFor="wh">
+        <Field label="Recibir en" htmlFor="wh" tour="oc-nueva-deposito">
           <Select id="wh" value={warehouseId} onChange={(e) => setWarehouseId(e.target.value)}>
             <option value="">Elegí…</option>
             {md.warehouses.filter((w) => w.isActive && w.type === 'OWN').map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
           </Select>
         </Field>
-        <Field label="Entrega esperada" htmlFor="exp"><Input id="exp" type="date" value={expectedAt} onChange={(e) => setExpectedAt(e.target.value)} /></Field>
-        <Field label="Observaciones" htmlFor="notes" className="sm:col-span-3"><Textarea id="notes" value={notes} onChange={(e) => setNotes(e.target.value)} /></Field>
+        <Field label="Entrega esperada" htmlFor="exp" tour="oc-nueva-entrega"><Input id="exp" type="date" value={expectedAt} onChange={(e) => setExpectedAt(e.target.value)} /></Field>
+        <Field label="Observaciones" htmlFor="notes" className="sm:col-span-3" tour="oc-nueva-observaciones"><Textarea id="notes" value={notes} onChange={(e) => setNotes(e.target.value)} /></Field>
       </Card>
-      <Card className="mb-4"><PurchaseLines lines={lines} setLines={setLines} /></Card>
+      <Card className="mb-4" tour="oc-nueva-lineas"><PurchaseLines lines={lines} setLines={setLines} /></Card>
       <div className="flex gap-2">
-        <Button disabled={!valid} loading={create.isPending} onClick={() => create.mutate()}>Crear orden de compra</Button>
+        <Button data-tour="oc-nueva-crear" disabled={!valid} loading={create.isPending} onClick={() => create.mutate()}>Crear orden de compra</Button>
         <Button variant="secondary" onClick={() => router.back()}>Cancelar</Button>
       </div>
     </div>

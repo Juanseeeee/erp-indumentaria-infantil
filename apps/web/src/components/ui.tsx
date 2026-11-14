@@ -35,9 +35,13 @@ export const Button = forwardRef<
   );
 });
 
-export function LinkButton({ href, variant = 'primary', className, children }: { href: string; variant?: Variant; className?: string; children: ReactNode }) {
+/**
+ * Recorridos guiados (components/tour.tsx): la prop `tour` marca el elemento con data-tour para que un
+ * paso pueda resaltarlo. En los elementos HTML y en Button/Input/Select se usa data-tour directamente.
+ */
+export function LinkButton({ href, variant = 'primary', className, children, tour }: { href: string; variant?: Variant; className?: string; children: ReactNode; tour?: string }) {
   return (
-    <Link href={href} className={cn('inline-flex h-9 items-center gap-2 rounded-md px-4 text-sm font-medium transition-colors', variants[variant], className)}>
+    <Link href={href} data-tour={tour} className={cn('inline-flex h-9 items-center gap-2 rounded-md px-4 text-sm font-medium transition-colors', variants[variant], className)}>
       {children}
     </Link>
   );
@@ -62,9 +66,9 @@ export const Select = forwardRef<HTMLSelectElement, SelectHTMLAttributes<HTMLSel
   );
 });
 
-export function Field({ label, error, hint, children, className, htmlFor }: { label: string; error?: string; hint?: string; children: ReactNode; className?: string; htmlFor?: string }) {
+export function Field({ label, error, hint, children, className, htmlFor, tour }: { label: string; error?: string; hint?: string; children: ReactNode; className?: string; htmlFor?: string; tour?: string }) {
   return (
-    <div className={cn('flex flex-col gap-1.5', className)}>
+    <div data-tour={tour} className={cn('flex flex-col gap-1.5', className)}>
       <label htmlFor={htmlFor} className="text-sm font-medium text-text">
         {label}
       </label>
@@ -80,8 +84,8 @@ export function Field({ label, error, hint, children, className, htmlFor }: { la
   );
 }
 
-export function Card({ className, children }: { className?: string; children: ReactNode }) {
-  return <div className={cn('rounded-lg border border-border bg-surface', className)}>{children}</div>;
+export function Card({ className, children, tour }: { className?: string; children: ReactNode; tour?: string }) {
+  return <div data-tour={tour} className={cn('rounded-lg border border-border bg-surface', className)}>{children}</div>;
 }
 
 type Tone = 'neutral' | 'accent' | 'success' | 'warning' | 'danger';
@@ -96,9 +100,9 @@ export function Badge({ tone = 'neutral', children }: { tone?: Tone; children: R
   return <span className={cn('inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium', tones[tone])}>{children}</span>;
 }
 
-export function PageHeader({ title, description, actions }: { title: string; description?: string; actions?: ReactNode }) {
+export function PageHeader({ title, description, actions, tour }: { title: string; description?: string; actions?: ReactNode; tour?: string }) {
   return (
-    <div className="mb-6 flex flex-wrap items-start justify-between gap-4">
+    <div data-tour={tour} className="mb-6 flex flex-wrap items-start justify-between gap-4">
       <div>
         <h1 className="text-xl font-semibold tracking-tight">{title}</h1>
         {description && <p className="mt-1 text-sm text-muted">{description}</p>}
@@ -136,9 +140,9 @@ export function ErrorBox({ error }: { error: unknown }) {
   );
 }
 
-export function Stat({ label, value, hint, tone }: { label: string; value: ReactNode; hint?: ReactNode; tone?: Tone }) {
+export function Stat({ label, value, hint, tone, tour }: { label: string; value: ReactNode; hint?: ReactNode; tone?: Tone; tour?: string }) {
   return (
-    <Card className="p-4">
+    <Card className="p-4" tour={tour}>
       <p className="text-xs font-medium uppercase tracking-wide text-muted">{label}</p>
       <p className={cn('num mt-1 text-2xl font-semibold', tone === 'danger' && 'text-danger', tone === 'warning' && 'text-warning')}>{value}</p>
       {hint && <p className="mt-1 text-xs text-muted">{hint}</p>}
@@ -146,13 +150,14 @@ export function Stat({ label, value, hint, tone }: { label: string; value: React
   );
 }
 
-export function Tabs({ tabs, value, onChange }: { tabs: { id: string; label: string }[]; value: string; onChange: (id: string) => void }) {
+export function Tabs({ tabs, value, onChange }: { tabs: { id: string; label: string; tour?: string }[]; value: string; onChange: (id: string) => void }) {
   return (
     <div role="tablist" className="mb-4 flex gap-1 overflow-x-auto border-b border-border">
       {tabs.map((t) => (
         <button
           key={t.id}
           role="tab"
+          data-tour={t.tour}
           aria-selected={value === t.id}
           onClick={() => onChange(t.id)}
           className={cn(

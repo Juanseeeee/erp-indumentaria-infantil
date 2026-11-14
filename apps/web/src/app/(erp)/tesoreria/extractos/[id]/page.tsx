@@ -76,7 +76,7 @@ export default function StatementPage({ params }: { params: Promise<{ id: string
         description={`${s.fileName} · ${fmtDate(s.periodFrom)} al ${fmtDate(s.periodTo)}${s.skippedCount ? ` · ${s.skippedCount} líneas ya estaban importadas` : ''}`}
         actions={
           <Can perm="treasury.move">
-            <Button onClick={() => auto.mutate()} loading={auto.isPending} disabled={!withSuggestion}>Conciliar sugeridas</Button>
+            <Button data-tour="ext-conciliar-sugeridas" onClick={() => auto.mutate()} loading={auto.isPending} disabled={!withSuggestion}>Conciliar sugeridas</Button>
           </Can>
         }
       />
@@ -84,13 +84,13 @@ export default function StatementPage({ params }: { params: Promise<{ id: string
       {auto.error && <ErrorBox error={auto.error} />}
       {undo.error && <ErrorBox error={undo.error} />}
 
-      <div className="mb-4 grid gap-4 sm:grid-cols-3">
+      <div data-tour="ext-resumen" className="mb-4 grid gap-4 sm:grid-cols-3">
         <Stat label="Líneas" value={s.summary.lines} hint={`${s.summary.lines - s.summary.pending} resueltas`} />
         <Stat label="Sin conciliar" value={s.summary.pending} tone={s.summary.pending ? 'warning' : undefined} hint={s.summary.pending ? `Neto ${fmtMoney(s.summary.pendingTotal)}` : 'Extracto conciliado'} />
         <Stat label="Neto del extracto" value={fmtMoney(s.summary.bankTotal)} hint="Créditos menos débitos" />
       </div>
 
-      <Card className="mb-6 overflow-hidden">
+      <Card className="mb-6 overflow-hidden" tour="ext-lineas">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="border-b border-border bg-surface-2 text-left text-muted">
@@ -114,7 +114,7 @@ export default function StatementPage({ params }: { params: Promise<{ id: string
 
       <h2 className="mb-1 font-medium">En el sistema y no en el banco</h2>
       <p className="mb-3 text-sm text-muted">Movimientos del período sin conciliar: cheques propios sin debitar, depósitos en tránsito o errores de carga.</p>
-      <Card>
+      <Card tour="ext-solo-sistema">
         {s.systemOnly.length ? (
           <ul className="divide-y divide-border text-sm">
             {s.systemOnly.map((m) => (
@@ -161,8 +161,8 @@ function LineRows({
           {l.movement ? `${fmtDate(l.movement.valueDate)} · ${l.movement.concept}` : l.status === 'IGNORED' ? l.notes : l.suggestions.length ? `${l.suggestions.length} sugerencia${l.suggestions.length > 1 ? 's' : ''}` : 'Sin coincidencias'}
         </td>
         <td className="px-3 py-2 text-right whitespace-nowrap">
-          {canAct && l.status === 'PENDING' && <Button size="sm" variant="secondary" onClick={onToggle} aria-expanded={open}>{open ? 'Cerrar' : 'Resolver'}</Button>}
-          {canAct && (l.status === 'MATCHED' || l.status === 'IGNORED') && <Button size="sm" variant="ghost" onClick={onUndo}>Deshacer</Button>}
+          {canAct && l.status === 'PENDING' && <Button data-tour="ext-resolver" size="sm" variant="secondary" onClick={onToggle} aria-expanded={open}>{open ? 'Cerrar' : 'Resolver'}</Button>}
+          {canAct && (l.status === 'MATCHED' || l.status === 'IGNORED') && <Button data-tour="ext-deshacer" size="sm" variant="ghost" onClick={onUndo}>Deshacer</Button>}
         </td>
       </tr>
       {open && (
@@ -196,7 +196,7 @@ function ResolvePanel({ line, onDone }: { line: Line; onDone: (message: string) 
   return (
     <div className="grid gap-4 lg:grid-cols-3">
       {err && <div className="lg:col-span-3"><ErrorBox error={err} /></div>}
-      <div>
+      <div data-tour="ext-resolver-conciliar">
         <p className="mb-2 font-medium">Conciliar con un movimiento</p>
         {line.suggestions.length ? (
           <ul className="flex flex-col gap-2">
@@ -219,6 +219,7 @@ function ResolvePanel({ line, onDone }: { line: Line; onDone: (message: string) 
           create.mutate();
         }}
         className="flex flex-col gap-2"
+        data-tour="ext-resolver-registrar"
       >
         <p className="font-medium">Registrar en el sistema</p>
         <Field label="Concepto" htmlFor={`cr-${line.id}`}><Input id={`cr-${line.id}`} required maxLength={300} value={concept} onChange={(e) => setConcept(e.target.value)} /></Field>
@@ -251,6 +252,7 @@ function ResolvePanel({ line, onDone }: { line: Line; onDone: (message: string) 
           ignore.mutate();
         }}
         className="flex flex-col gap-2"
+        data-tour="ext-resolver-ignorar"
       >
         <p className="font-medium">Ignorar</p>
         <Field label="Motivo" htmlFor={`ig-${line.id}`} hint="Por ejemplo, una línea informativa del banco"><Input id={`ig-${line.id}`} required minLength={3} maxLength={300} value={reason} onChange={(e) => setReason(e.target.value)} /></Field>

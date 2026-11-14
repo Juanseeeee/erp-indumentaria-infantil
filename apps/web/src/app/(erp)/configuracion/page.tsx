@@ -9,21 +9,22 @@ import { useCan, useMasterData } from '@/lib/session';
 import { Badge, Button, Card, Field, Input, PageHeader, Select, Spinner, Tabs } from '@/components/ui';
 
 const TABS = [
-  { id: 'empresa', label: 'Empresa y aprobaciones' },
-  { id: 'depositos', label: 'Depósitos' },
-  { id: 'talles', label: 'Talles' },
-  { id: 'colores', label: 'Colores' },
-  { id: 'categorias', label: 'Categorías' },
-  { id: 'centros', label: 'Centros de costo' },
-  { id: 'temporadas', label: 'Temporadas y colecciones' },
-  { id: 'unidades', label: 'Unidades' },
-  { id: 'comercial', label: 'Condiciones de pago y zonas' },
+  { id: 'empresa', label: 'Empresa y aprobaciones', tour: 'config-tab-empresa' },
+  { id: 'depositos', label: 'Depósitos', tour: 'config-tab-depositos' },
+  { id: 'talles', label: 'Talles', tour: 'config-tab-talles' },
+  { id: 'colores', label: 'Colores', tour: 'config-tab-colores' },
+  { id: 'categorias', label: 'Categorías', tour: 'config-tab-categorias' },
+  { id: 'centros', label: 'Centros de costo', tour: 'config-tab-centros' },
+  { id: 'temporadas', label: 'Temporadas y colecciones', tour: 'config-tab-temporadas' },
+  { id: 'unidades', label: 'Unidades', tour: 'config-tab-unidades' },
+  { id: 'comercial', label: 'Condiciones de pago y zonas', tour: 'config-tab-comercial' },
 ];
 
 /** Formulario inline: una fila de campos + botón Agregar. Evita modales y pantallas extra. */
-function InlineForm({ children, onSubmit, loading }: { children: ReactNode; onSubmit: (f: FormData) => void; loading?: boolean }) {
+function InlineForm({ children, onSubmit, loading, tour }: { children: ReactNode; onSubmit: (f: FormData) => void; loading?: boolean; tour?: string }) {
   return (
     <form
+      data-tour={tour}
       className="flex flex-wrap items-end gap-3 border-b border-border p-4"
       onSubmit={(e: FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -106,7 +107,7 @@ export default function SettingsPage() {
 
       {tab === 'empresa' && company.data && (
         <div className="flex flex-col gap-4">
-          <Card className="p-4">
+          <Card className="p-4" tour="config-empresa-datos">
             <form
               className="grid grid-cols-1 gap-3 sm:grid-cols-2"
               onSubmit={(e) => {
@@ -121,7 +122,7 @@ export default function SettingsPage() {
               <Field label="Nombre de fantasía" htmlFor="tradeName">
                 <Input id="tradeName" name="tradeName" defaultValue={company.data.company.tradeName ?? ''} disabled={!can('settings.company.edit')} />
               </Field>
-              <Field label="CUIT" htmlFor="cuit" hint="Para modificarlo, contactá al administrador del sistema.">
+              <Field label="CUIT" htmlFor="cuit" tour="config-empresa-cuit" hint="Para modificarlo, contactá al administrador del sistema.">
                 <Input id="cuit" value={company.data.company.cuit} disabled readOnly />
               </Field>
               <Field label="Domicilio" htmlFor="address">
@@ -129,13 +130,14 @@ export default function SettingsPage() {
               </Field>
               {can('settings.company.edit') && (
                 <div>
-                  <Button type="submit" loading={mCompany.isPending}>Guardar</Button>
+                  <Button type="submit" loading={mCompany.isPending} data-tour="config-empresa-guardar">Guardar</Button>
                 </div>
               )}
             </form>
           </Card>
           <PointsOfSaleCard values={company.data.purchasingPointsOfSale} canEdit={can('settings.company.edit')} mutation={mPos} />
           <RuleCard
+            tour="config-regla-ajustes"
             title="Aprobación de ajustes de stock"
             description="Los ajustes valorizados por encima de este monto quedan pendientes hasta que los apruebe otra persona con permiso."
             actionCode="inventory.adjust"
@@ -144,6 +146,7 @@ export default function SettingsPage() {
             mutation={mRule}
           />
           <RuleCard
+            tour="config-regla-pagos"
             title="Aprobación de órdenes de pago"
             description="Las órdenes de pago por encima de este monto quedan pendientes: no se mueve dinero ni se entregan cheques hasta que las apruebe Dirección (otra persona que quien la cargó)."
             actionCode="payables.payment"
@@ -155,11 +158,11 @@ export default function SettingsPage() {
       )}
 
       {tab === 'depositos' && (
-        <Card>
-          <InlineForm loading={mWarehouse.isPending} onSubmit={(f) => mWarehouse.mutate({ code: f.get('code'), name: f.get('name'), type: f.get('type') })}>
+        <Card tour="config-depositos">
+          <InlineForm tour="config-depositos-form" loading={mWarehouse.isPending} onSubmit={(f) => mWarehouse.mutate({ code: f.get('code'), name: f.get('name'), type: f.get('type') })}>
             <Field label="Código" htmlFor="wcode"><Input id="wcode" name="code" className="w-28" required /></Field>
             <Field label="Nombre" htmlFor="wname"><Input id="wname" name="name" required /></Field>
-            <Field label="Tipo" htmlFor="wtype">
+            <Field label="Tipo" htmlFor="wtype" tour="config-deposito-tipo">
               <Select id="wtype" name="type">
                 <option value="OWN">Propio</option>
                 <option value="QUARANTINE">Cuarentena</option>
@@ -185,13 +188,14 @@ export default function SettingsPage() {
       {tab === 'talles' && (
         <Card>
           <InlineForm
+            tour="config-talles-form"
             loading={mScale.isPending}
             onSubmit={(f) =>
               mScale.mutate({ name: f.get('name'), sizes: String(f.get('sizes')).split(',').map((s) => s.trim()).filter(Boolean) })
             }
           >
             <Field label="Nombre de la escala" htmlFor="sname"><Input id="sname" name="name" required /></Field>
-            <Field label="Talles (en orden, separados por coma)" htmlFor="ssizes" className="min-w-72 flex-1">
+            <Field label="Talles (en orden, separados por coma)" htmlFor="ssizes" tour="config-talles-lista" className="min-w-72 flex-1">
               <Input id="ssizes" name="sizes" placeholder="RN, 0-3, 3-6, 6-9, 9-12" required />
             </Field>
           </InlineForm>
@@ -201,10 +205,10 @@ export default function SettingsPage() {
 
       {tab === 'colores' && (
         <Card>
-          <InlineForm loading={mColor.isPending} onSubmit={(f) => mColor.mutate({ code: f.get('code'), name: f.get('name'), hex: f.get('hex') })}>
-            <Field label="Código" htmlFor="ccode" hint="Se usa en el SKU"><Input id="ccode" name="code" className="w-24" required /></Field>
+          <InlineForm tour="config-colores-form" loading={mColor.isPending} onSubmit={(f) => mColor.mutate({ code: f.get('code'), name: f.get('name'), hex: f.get('hex') })}>
+            <Field label="Código" htmlFor="ccode" hint="Se usa en el SKU" tour="config-color-codigo"><Input id="ccode" name="code" className="w-24" required /></Field>
             <Field label="Nombre" htmlFor="cname"><Input id="cname" name="name" required /></Field>
-            <Field label="Muestra" htmlFor="chex"><Input id="chex" name="hex" type="color" className="w-16 p-1" defaultValue="#ffffff" /></Field>
+            <Field label="Muestra" htmlFor="chex" tour="config-color-muestra"><Input id="chex" name="hex" type="color" className="w-16 p-1" defaultValue="#ffffff" /></Field>
           </InlineForm>
           <List
             items={md.colors.map((c) => ({
@@ -223,9 +227,9 @@ export default function SettingsPage() {
 
       {tab === 'categorias' && (
         <Card>
-          <InlineForm loading={mCategory.isPending} onSubmit={(f) => mCategory.mutate({ name: f.get('name'), kind: f.get('kind') })}>
+          <InlineForm tour="config-categorias-form" loading={mCategory.isPending} onSubmit={(f) => mCategory.mutate({ name: f.get('name'), kind: f.get('kind') })}>
             <Field label="Nombre" htmlFor="catname"><Input id="catname" name="name" required /></Field>
-            <Field label="Para" htmlFor="catkind">
+            <Field label="Para" htmlFor="catkind" tour="config-categoria-para">
               <Select id="catkind" name="kind">
                 <option value="PRODUCT">Productos</option>
                 <option value="MATERIAL">Materiales</option>
@@ -245,7 +249,7 @@ export default function SettingsPage() {
 
       {tab === 'centros' && (
         <Card>
-          <InlineForm loading={mCostCenter.isPending} onSubmit={(f) => mCostCenter.mutate({ code: f.get('code'), name: f.get('name') })}>
+          <InlineForm tour="config-centros-form" loading={mCostCenter.isPending} onSubmit={(f) => mCostCenter.mutate({ code: f.get('code'), name: f.get('name') })}>
             <Field label="Código" htmlFor="cccode" hint="Corto, p. ej. PRO"><Input id="cccode" name="code" className="w-24" maxLength={20} required /></Field>
             <Field label="Nombre" htmlFor="ccname"><Input id="ccname" name="name" maxLength={80} required /></Field>
           </InlineForm>
@@ -256,14 +260,14 @@ export default function SettingsPage() {
       {tab === 'temporadas' && (
         <div className="flex flex-col gap-4">
           <Card>
-            <InlineForm loading={mSeason.isPending} onSubmit={(f) => mSeason.mutate({ name: f.get('name'), year: Number(f.get('year')) })}>
+            <InlineForm tour="config-temporadas-form" loading={mSeason.isPending} onSubmit={(f) => mSeason.mutate({ name: f.get('name'), year: Number(f.get('year')) })}>
               <Field label="Temporada" htmlFor="sea"><Input id="sea" name="name" placeholder="Primavera-Verano 2027" required /></Field>
               <Field label="Año" htmlFor="year"><Input id="year" name="year" type="number" className="w-24" defaultValue={new Date().getFullYear() + 1} /></Field>
             </InlineForm>
             <List items={md.seasons.map((s) => ({ key: s.id, main: s.name, side: s.year }))} />
           </Card>
           <Card>
-            <InlineForm loading={mCollection.isPending} onSubmit={(f) => mCollection.mutate({ name: f.get('name'), seasonId: f.get('seasonId') })}>
+            <InlineForm tour="config-colecciones-form" loading={mCollection.isPending} onSubmit={(f) => mCollection.mutate({ name: f.get('name'), seasonId: f.get('seasonId') })}>
               <Field label="Colección" htmlFor="coll"><Input id="coll" name="name" required /></Field>
               <Field label="Temporada" htmlFor="collsea">
                 <Select id="collsea" name="seasonId" required>
@@ -279,7 +283,7 @@ export default function SettingsPage() {
       {tab === 'unidades' && (
         <div className="flex flex-col gap-4">
           <Card>
-            <InlineForm loading={mUom.isPending} onSubmit={(f) => mUom.mutate({ code: f.get('code'), name: f.get('name'), dimension: f.get('dimension') })}>
+            <InlineForm tour="config-unidades-form" loading={mUom.isPending} onSubmit={(f) => mUom.mutate({ code: f.get('code'), name: f.get('name'), dimension: f.get('dimension') })}>
               <Field label="Código" htmlFor="ucode"><Input id="ucode" name="code" className="w-24" required /></Field>
               <Field label="Nombre" htmlFor="uname"><Input id="uname" name="name" required /></Field>
               <Field label="Mide" htmlFor="udim">
@@ -295,6 +299,7 @@ export default function SettingsPage() {
           </Card>
           <Card>
             <InlineForm
+              tour="config-conversiones-form"
               loading={mConv.isPending}
               onSubmit={(f) => mConv.mutate({ fromUomId: f.get('from'), toUomId: f.get('to'), factor: String(f.get('factor')).replace(',', '.') })}
             >
@@ -322,16 +327,17 @@ export default function SettingsPage() {
         <div className="flex flex-col gap-4">
           <Card>
             <InlineForm
+              tour="config-condiciones-form"
               loading={mTerm.isPending}
               onSubmit={(f) => mTerm.mutate({ name: f.get('name'), days: String(f.get('days')).split(/[,/ ]+/).filter(Boolean).map(Number) })}
             >
               <Field label="Condición" htmlFor="tname"><Input id="tname" name="name" placeholder="30/60" required /></Field>
-              <Field label="Días de cada cuota" htmlFor="tdays"><Input id="tdays" name="days" placeholder="30, 60" required /></Field>
+              <Field label="Días de cada cuota" htmlFor="tdays" tour="config-condicion-dias"><Input id="tdays" name="days" placeholder="30, 60" required /></Field>
             </InlineForm>
             <List items={md.paymentTerms.map((t) => ({ key: t.id, main: t.name, side: `${t.days.join(' / ')} días` }))} />
           </Card>
           <Card>
-            <InlineForm loading={mZone.isPending} onSubmit={(f) => mZone.mutate({ name: f.get('name') })}>
+            <InlineForm tour="config-zonas-form" loading={mZone.isPending} onSubmit={(f) => mZone.mutate({ name: f.get('name') })}>
               <Field label="Zona" htmlFor="zname"><Input id="zname" name="name" required /></Field>
             </InlineForm>
             <List items={md.zones.map((z) => ({ key: z.id, main: z.name }))} />
@@ -354,7 +360,7 @@ function PointsOfSaleCard({
 }) {
   const save = (pointsOfSale: number[]) => mutation.mutate({ pointsOfSale });
   return (
-    <Card className="p-4">
+    <Card className="p-4" tour="config-puntos-venta">
       <h2 className="font-medium">Puntos de venta de proveedores</h2>
       <p className="mt-1 mb-3 text-sm text-muted">
         Se ofrecen al cargar facturas de proveedores. El primero es el predeterminado; el número se sugiere como el siguiente al último cargado de ese proveedor.
@@ -398,6 +404,7 @@ function PointsOfSaleCard({
 }
 
 function RuleCard({
+  tour,
   title,
   description,
   actionCode,
@@ -405,6 +412,7 @@ function RuleCard({
   canEdit,
   mutation,
 }: {
+  tour?: string;
   title: string;
   description: string;
   actionCode: string;
@@ -414,7 +422,7 @@ function RuleCard({
 }) {
   const id = `threshold-${actionCode}`;
   return (
-    <Card className="p-4">
+    <Card className="p-4" tour={tour}>
       <h2 className="font-medium">{title}</h2>
       <p className="mt-1 mb-3 text-sm text-muted">
         {description} Actual: {rule?.isActive ? fmtMoney(rule.threshold) : 'sin regla (no se piden aprobaciones)'}.

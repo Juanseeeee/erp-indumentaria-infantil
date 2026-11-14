@@ -60,7 +60,7 @@ export default function SalesOrdersPage() {
       <PageHeader
         title="Pedidos de venta"
         description="Al confirmar un pedido se reserva el stock disponible; lo que falta queda pendiente."
-        actions={<Can perm="sales.order"><LinkButton href="/ventas/pedidos/nuevo"><Plus className="size-4" /> Nuevo pedido</LinkButton></Can>}
+        actions={<Can perm="sales.order"><LinkButton href="/ventas/pedidos/nuevo" tour="pedidos-nuevo"><Plus className="size-4" /> Nuevo pedido</LinkButton></Can>}
       />
       <DataTable
         id="sales-orders"
@@ -73,7 +73,7 @@ export default function SalesOrdersPage() {
         loading={isLoading}
         onRowClick={(r) => router.push(`/ventas/pedidos/${r.id}`)}
         toolbar={
-          <Select aria-label="Estado" className="w-56" value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }}>
+          <Select aria-label="Estado" data-tour="pedidos-filtro-estado" className="w-56" value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); }}>
             <option value="OPEN">Con entregas pendientes</option>
             <option value="DRAFT">Borradores</option>
             <option value="DELIVERED">Entregados</option>

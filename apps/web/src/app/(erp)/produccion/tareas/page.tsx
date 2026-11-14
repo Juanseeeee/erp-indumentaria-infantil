@@ -58,12 +58,12 @@ export default function TasksPage() {
 
   return (
     <div className="mx-auto max-w-xl">
-      <PageHeader title="Mis tareas" description="Órdenes con etapas para hacer en planta, las más urgentes primero." />
+      <PageHeader tour="tareas-header" title="Mis tareas" description="Órdenes con etapas para hacer en planta, las más urgentes primero." />
       {!data?.length && <Card><EmptyState title="No hay tareas pendientes" description="Cuando se libere una orden, sus etapas internas aparecen acá." /></Card>}
       <div className="flex flex-col gap-3">
         {data?.map((t) => (
           <Card key={t.orderId} className="p-4">
-            <button className="w-full text-left" onClick={() => { setOpen(open === t.orderId ? null : t.orderId); setGood(0); setBad(0); setReason(''); }}>
+            <button data-tour="tareas-tarjeta" className="w-full text-left" onClick={() => { setOpen(open === t.orderId ? null : t.orderId); setGood(0); setBad(0); setReason(''); }}>
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <p className="text-lg font-semibold">{t.stage.stage?.name}</p>
@@ -77,18 +77,18 @@ export default function TasksPage() {
               </div>
             </button>
             {open === t.orderId && (
-              <div className="mt-4 flex flex-col gap-4 border-t border-border pt-4">
+              <div data-tour="tareas-cantidades" className="mt-4 flex flex-col gap-4 border-t border-border pt-4">
                 <Counter label="Prendas OK" value={good} set={setGood} />
                 <Counter label="Con falla" value={bad} set={setBad} tone={bad ? 'text-danger' : ''} />
                 {bad > 0 && (
-                  <Select aria-label="Motivo de la falla" value={reason} onChange={(e) => setReason(e.target.value)} className="h-11">
+                  <Select data-tour="tareas-motivo" aria-label="Motivo de la falla" value={reason} onChange={(e) => setReason(e.target.value)} className="h-11">
                     <option value="">Motivo de la falla…</option>
                     {reasons.data?.defectReasons.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
                   </Select>
                 )}
                 <div className="grid grid-cols-2 gap-2">
-                  <Button className="h-12 text-base whitespace-normal" disabled={!good && !bad} loading={report.isPending} onClick={() => report.mutate({ ...t, finish: false })}>Informar</Button>
-                  <Button className="h-12 text-sm leading-tight whitespace-normal" variant="secondary" loading={report.isPending} onClick={() => report.mutate({ ...t, finish: true })}>Informar y terminar etapa</Button>
+                  <Button data-tour="tareas-informar" className="h-12 text-base whitespace-normal" disabled={!good && !bad} loading={report.isPending} onClick={() => report.mutate({ ...t, finish: false })}>Informar</Button>
+                  <Button data-tour="tareas-terminar" className="h-12 text-sm leading-tight whitespace-normal" variant="secondary" loading={report.isPending} onClick={() => report.mutate({ ...t, finish: true })}>Informar y terminar etapa</Button>
                 </div>
               </div>
             )}

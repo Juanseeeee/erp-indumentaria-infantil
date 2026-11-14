@@ -15,7 +15,7 @@ export default function TechSheetsPage() {
   return (
     <div className="max-w-3xl">
       <PageHeader title="Fichas técnicas" description="Materiales, consumos por talle, merma y recorrido de etapas de cada modelo. Se versionan: activar una versión nueva no cambia las órdenes ya liberadas." />
-      <Card>
+      <Card tour="fichas-lista">
         <ul>
           {data?.rows.map((p) => (
             <li key={p.id} className="border-b border-border last:border-0">

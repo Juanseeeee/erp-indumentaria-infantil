@@ -1,0 +1,641 @@
+import type { Tour } from './types';
+
+/** Administración: configuración, usuarios, roles, auditoría y cuenta. */
+export const TOURS_ADMINISTRACION: Tour[] = [
+  // ───────────────────────── Usuarios ─────────────────────────
+  {
+    id: 'usuario-crear',
+    area: 'Administración',
+    title: 'Crear un usuario',
+    description: 'Dar de alta a una persona con su email, una contraseña inicial y sus roles.',
+    permissions: ['users.manage'],
+    keywords: ['crear usuario', 'nuevo usuario', 'alta de usuario', 'dar de alta un empleado', 'agregar empleado', 'dar acceso', 'acceso al sistema', 'invitar', 'cuenta nueva', 'login para alguien', 'usuario y clave', 'nuevo empleado'],
+    steps: [
+      {
+        route: '/configuracion/usuarios',
+        target: 'nav-/configuracion/usuarios',
+        title: 'Usuarios',
+        body: 'Desde Administración › «Usuarios» se manejan las personas que entran al sistema. Crear usuarios requiere el permiso de administrar usuarios (entre los roles iniciales, solo «Superadministrador»).',
+      },
+      {
+        route: '/configuracion/usuarios',
+        target: 'usuarios-nuevo',
+        title: 'Nuevo usuario',
+        body: 'Tocá «Nuevo usuario» para abrir el formulario arriba de la lista, y después tocá **Siguiente**.',
+      },
+      {
+        route: '/configuracion/usuarios',
+        target: 'usuarios-form',
+        title: 'Nombre y email',
+        body: 'Completá «Nombre» y «Email». El email es con el que la persona va a ingresar.',
+      },
+      {
+        route: '/configuracion/usuarios',
+        target: 'usuarios-contrasena',
+        title: 'Contraseña inicial',
+        body: 'Escribí una «Contraseña inicial» de al menos 10 caracteres, con letras y números. Si el email ya existía en el sistema, se reactiva con su contraseña anterior y esta no se aplica.',
+      },
+      {
+        route: '/configuracion/usuarios',
+        target: 'usuarios-roles',
+        title: 'Roles',
+        body: 'Marcá uno o más «Roles»: definen qué menús y acciones va a tener. Es obligatorio elegir al menos uno.',
+      },
+      {
+        route: '/configuracion/usuarios',
+        target: 'usuarios-crear',
+        title: 'Crear el usuario',
+        body: 'Tocá «Crear usuario» (se habilita cuando hay al menos un rol marcado). Vas a ver «Usuario creado.»; pasale a la persona su email y su contraseña inicial.',
+      },
+    ],
+  },
+  {
+    id: 'usuario-cambiar-roles',
+    area: 'Administración',
+    title: 'Cambiar los roles o permisos de un usuario',
+    description: 'Asignarle a alguien otros roles para que vea más (o menos) del sistema.',
+    permissions: ['users.manage'],
+    keywords: ['cambiar rol', 'asignar rol', 'dar permisos', 'quitar permisos', 'darle acceso a', 'cambiar permisos de un usuario', 'no le aparece el menu', 'no tiene permiso', 'habilitar a alguien', 'perfil de usuario', 'ascender', 'roles de un usuario'],
+    steps: [
+      {
+        route: '/configuracion/usuarios',
+        target: 'usuarios-tabla',
+        title: 'La lista de usuarios',
+        body: 'Cada fila es una persona, con su email, sus roles y su último ingreso. Los permisos se dan siempre a través de los roles.',
+      },
+      {
+        route: '/configuracion/usuarios',
+        target: 'usuarios-col-roles',
+        title: 'Elegir los roles',
+        body: 'En la columna «Roles» de la persona, elegí los roles en la lista (usá **Ctrl + clic** para marcar varios). Se guarda solo al cambiar y aparece «Roles actualizados.». No se puede dejar a nadie sin roles.',
+      },
+      {
+        route: '/configuracion/usuarios',
+        target: 'nav-/configuracion/roles',
+        title: 'Cuándo rige',
+        body: 'Los permisos nuevos valen desde la siguiente acción del usuario; puede necesitar recargar la página para ver el menú actualizado. Para saber qué incluye cada rol, entrá a «Roles y permisos».',
+      },
+    ],
+  },
+  {
+    id: 'usuario-desactivar',
+    area: 'Administración',
+    title: 'Desactivar o reactivar un usuario',
+    description: 'Quitarle el acceso a alguien que dejó la empresa, o devolvérselo.',
+    permissions: ['users.manage'],
+    keywords: ['desactivar usuario', 'dar de baja usuario', 'bloquear', 'quitar acceso', 'se fue de la empresa', 'renuncio', 'despido', 'borrar usuario', 'eliminar usuario', 'reactivar usuario', 'volver a habilitar', 'suspender'],
+    steps: [
+      {
+        route: '/configuracion/usuarios',
+        target: 'usuarios-tabla',
+        title: 'Buscá a la persona',
+        body: 'En la lista, a la derecha de cada fila está el botón «Desactivar» (o «Reactivar» si ya está inactiva, con la etiqueta «Inactivo»). En tu propia fila no aparece: no podés desactivarte a vos mismo.',
+      },
+      {
+        route: '/configuracion/usuarios',
+        target: 'usuarios-col-ingreso',
+        title: 'Último ingreso',
+        body: 'Esta columna te muestra cuándo entró por última vez; sirve para detectar cuentas que ya nadie usa.',
+      },
+      {
+        route: '/configuracion/usuarios',
+        target: 'usuarios-tabla',
+        title: 'Qué pasa al desactivar',
+        body: 'Tocá «Desactivar» en su fila: se cierran todas sus sesiones y no puede volver a entrar. Los usuarios no se borran, así su historial queda en la auditoría; con «Reactivar» le devolvés el acceso.',
+      },
+    ],
+  },
+
+  // ───────────────────────── Roles ─────────────────────────
+  {
+    id: 'roles-ver-permisos',
+    area: 'Administración',
+    title: 'Ver qué puede hacer cada rol',
+    description: 'Consultar los permisos de cada rol, agrupados por módulo.',
+    permissions: ['users.view'],
+    keywords: ['que puede hacer cada rol', 'permisos de un rol', 'ver roles', 'perfiles', 'que ve un vendedor', 'quien puede aprobar', 'matriz de permisos', 'accesos', 'que incluye el rol', 'niveles de acceso'],
+    steps: [
+      {
+        route: '/configuracion/roles',
+        target: 'roles-lista',
+        title: 'Los roles',
+        body: 'A la izquierda están todos los roles con la cantidad de usuarios que tiene cada uno. Tocá uno para ver sus permisos y después tocá **Siguiente**.',
+      },
+      {
+        route: '/configuracion/roles',
+        target: 'roles-editor',
+        title: 'Sus permisos',
+        body: 'Acá ves los permisos agrupados por módulo: cada casilla tiene la descripción y, debajo, el código. «Rol inicial» marca los que vienen con el sistema.',
+      },
+      {
+        route: '/configuracion/roles',
+        target: 'roles-editor',
+        title: 'Siempre en el servidor',
+        body: 'Si un rol no tiene un permiso, la operación se rechaza aunque el botón se vea. Para cambiar los permisos hace falta el permiso de administrar roles.',
+      },
+    ],
+  },
+  {
+    id: 'rol-crear',
+    area: 'Administración',
+    title: 'Crear un rol personalizado',
+    description: 'Armar un rol nuevo con exactamente los permisos que necesitás.',
+    permissions: ['roles.manage'],
+    keywords: ['crear rol', 'nuevo rol', 'rol personalizado', 'perfil nuevo', 'armar permisos', 'rol a medida', 'rol para cortadores', 'nuevo puesto', 'grupo de permisos', 'permisos personalizados'],
+    steps: [
+      {
+        route: '/configuracion/roles',
+        target: 'roles-nuevo',
+        title: 'Nuevo rol',
+        body: 'Tocá «Nuevo rol» y después tocá **Siguiente**. Solo aparece con el permiso de administrar roles.',
+      },
+      {
+        route: '/configuracion/roles',
+        target: 'roles-codigo',
+        title: 'Código',
+        body: 'Escribí un «Código» corto en mayúsculas (letras, números y guion bajo), por ejemplo CORTE. Ojo: si usás el código de un rol que ya existe, se reemplazan su nombre y sus permisos.',
+      },
+      {
+        route: '/configuracion/roles',
+        target: 'roles-nombre',
+        title: 'Nombre',
+        body: 'El «Nombre» es lo que se ve al asignar el rol a los usuarios.',
+      },
+      {
+        route: '/configuracion/roles',
+        target: 'roles-permisos',
+        title: 'Marcá los permisos',
+        body: 'Tildá los permisos que necesita, módulo por módulo. Los de «Costos (sensible)» muestran costos y márgenes: dalos solo a quien corresponda.',
+      },
+      {
+        route: '/configuracion/roles',
+        target: 'roles-guardar',
+        title: 'Guardar',
+        body: 'Tocá «Guardar rol». Vas a ver «Rol guardado.» y ya lo podés asignar en «Usuarios».',
+      },
+    ],
+  },
+  {
+    id: 'rol-editar',
+    area: 'Administración',
+    title: 'Cambiar los permisos de un rol',
+    description: 'Agregarle o quitarle permisos a un rol existente; afecta a todos sus usuarios.',
+    permissions: ['roles.manage'],
+    keywords: ['editar rol', 'modificar rol', 'cambiar permisos del rol', 'agregar permiso', 'quitar permiso', 'sacar permiso', 'habilitar opcion a un rol', 'restringir', 'renombrar rol', 'borrar rol'],
+    steps: [
+      {
+        route: '/configuracion/roles',
+        target: 'roles-lista',
+        title: 'Elegí el rol',
+        body: 'Tocá el rol que querés cambiar y después tocá **Siguiente**. El cambio afecta a todos los usuarios que lo tienen (ves cuántos al costado).',
+      },
+      {
+        route: '/configuracion/roles',
+        target: 'roles-permisos',
+        title: 'Cambiá las casillas',
+        body: 'Marcá o desmarcá permisos; también podés cambiar el «Nombre». El «Superadministrador» muestra «No editable» y no se puede modificar.',
+      },
+      {
+        route: '/configuracion/roles',
+        target: 'roles-guardar',
+        title: 'Guardar',
+        body: 'Tocá «Guardar rol». No hay opción para borrar roles: si uno ya no se usa, sacáselo a los usuarios.',
+      },
+    ],
+  },
+
+  // ───────────────────────── Configuración: empresa ─────────────────────────
+  {
+    id: 'empresa-datos',
+    area: 'Administración',
+    title: 'Cambiar los datos de la empresa',
+    description: 'Editar razón social, nombre de fantasía y domicilio.',
+    permissions: ['settings.company.edit'],
+    keywords: ['datos de la empresa', 'razon social', 'nombre de fantasia', 'domicilio', 'direccion de la empresa', 'cuit', 'cambiar nombre de la empresa', 'datos fiscales', 'mi empresa', 'configurar empresa'],
+    steps: [
+      {
+        route: '/configuracion',
+        target: 'config-tab-empresa',
+        title: 'Empresa y aprobaciones',
+        body: 'En «Configuración», tocá la pestaña «Empresa y aprobaciones» (es la que se abre primero) y después tocá **Siguiente**.',
+      },
+      {
+        route: '/configuracion',
+        target: 'config-empresa-datos',
+        title: 'Los datos',
+        body: 'Cambiá «Razón social», «Nombre de fantasía» o «Domicilio». Sin permiso de edición los campos se ven deshabilitados.',
+      },
+      {
+        route: '/configuracion',
+        target: 'config-empresa-cuit',
+        title: 'CUIT',
+        body: 'El «CUIT» no se puede cambiar desde acá: para modificarlo, contactá al administrador del sistema.',
+      },
+      {
+        route: '/configuracion',
+        target: 'config-empresa-guardar',
+        title: 'Guardar',
+        body: 'Tocá «Guardar». Vas a ver «Guardado.» y el cambio queda en la auditoría.',
+      },
+    ],
+  },
+  {
+    id: 'puntos-de-venta-proveedores',
+    area: 'Administración',
+    title: 'Configurar los puntos de venta de proveedores',
+    description: 'Elegir qué puntos de venta se ofrecen al cargar facturas de proveedores y cuál es el predeterminado.',
+    permissions: ['settings.company.edit'],
+    keywords: ['punto de venta', 'puntos de venta', 'pto de venta', 'numeracion facturas proveedor', 'punto de venta predeterminado', 'factura de compra', 'comprobante proveedor', 'agregar punto de venta', 'pv'],
+    steps: [
+      {
+        route: '/configuracion',
+        target: 'config-tab-empresa',
+        title: 'Empresa y aprobaciones',
+        body: 'Tocá la pestaña «Empresa y aprobaciones» y después tocá **Siguiente**.',
+      },
+      {
+        route: '/configuracion',
+        target: 'config-puntos-venta',
+        title: 'Puntos de venta de proveedores',
+        body: 'Se ofrecen al cargar facturas de proveedores; el primero es el «Predeterminado». En los demás tenés «Hacer predeterminado» y «Quitar».',
+      },
+      {
+        route: '/configuracion',
+        target: 'config-puntos-venta',
+        title: 'Agregar uno',
+        body: 'Escribí el número en «Punto de venta» (hasta 5 dígitos) y tocá «Agregar». Se guarda al instante.',
+      },
+    ],
+  },
+  {
+    id: 'umbrales-aprobacion',
+    area: 'Administración',
+    title: 'Configurar las aprobaciones (umbrales)',
+    description: 'Definir desde qué monto los ajustes de stock y las órdenes de pago necesitan aprobación.',
+    permissions: ['settings.company.edit'],
+    keywords: ['aprobaciones', 'umbral', 'monto de aprobacion', 'aprobar ajustes', 'aprobar pagos', 'limite de pago', 'doble control', 'autorizacion', 'tope', 'orden de pago pendiente', 'ajuste pendiente de aprobacion', 'regla de aprobacion'],
+    steps: [
+      {
+        route: '/configuracion',
+        target: 'config-tab-empresa',
+        title: 'Empresa y aprobaciones',
+        body: 'Tocá la pestaña «Empresa y aprobaciones» y después tocá **Siguiente**.',
+      },
+      {
+        route: '/configuracion',
+        target: 'config-regla-ajustes',
+        title: 'Ajustes de stock',
+        body: 'Los ajustes valorizados por encima del «Umbral ($)» quedan pendientes hasta que los apruebe otra persona con permiso. «Actual:» muestra el monto vigente o «sin regla (no se piden aprobaciones)».',
+      },
+      {
+        route: '/configuracion',
+        target: 'config-regla-pagos',
+        title: 'Órdenes de pago',
+        body: 'Igual para las órdenes de pago a proveedores: por encima del umbral no se mueve dinero hasta que las apruebe Dirección (alguien distinto de quien la cargó).',
+      },
+      {
+        route: '/configuracion',
+        target: 'config-regla-ajustes',
+        title: 'Guardar la regla',
+        body: 'Escribí el monto en «Umbral ($)» de la tarjeta que quieras y tocá «Guardar regla». Vas a ver «Guardado.».',
+      },
+    ],
+  },
+
+  // ───────────────────────── Configuración: datos maestros ─────────────────────────
+  {
+    id: 'deposito-agregar',
+    area: 'Administración',
+    title: 'Agregar un depósito',
+    description: 'Crear un depósito propio, de cuarentena o en tránsito.',
+    permissions: ['settings.master.manage'],
+    keywords: ['agregar deposito', 'nuevo deposito', 'crear deposito', 'almacen', 'galpon', 'local', 'sucursal', 'cuarentena', 'en transito', 'ubicacion de stock', 'deposito de taller'],
+    steps: [
+      {
+        route: '/configuracion',
+        target: 'config-tab-depositos',
+        title: 'Depósitos',
+        body: 'En «Configuración», tocá la pestaña «Depósitos» y después tocá **Siguiente**.',
+      },
+      {
+        route: '/configuracion',
+        target: 'config-depositos-form',
+        title: 'Código y nombre',
+        body: 'Completá «Código» (corto, no se puede repetir) y «Nombre».',
+      },
+      {
+        route: '/configuracion',
+        target: 'config-deposito-tipo',
+        title: 'Tipo',
+        body: 'Elegí el «Tipo»: «Propio», «Cuarentena» o «En tránsito».',
+      },
+      {
+        route: '/configuracion',
+        target: 'config-depositos',
+        title: 'Agregar',
+        body: 'Tocá «Agregar» y aparece en la lista de abajo. Los depósitos de taller no se cargan acá: se crean solos al dar de alta un taller.',
+      },
+    ],
+  },
+  {
+    id: 'talles-escala',
+    area: 'Administración',
+    title: 'Agregar una curva (escala) de talles',
+    description: 'Crear una escala de talles en orden para usar en los modelos.',
+    permissions: ['settings.master.manage'],
+    keywords: ['talles', 'curva de talles', 'escala de talles', 'agregar talle', 'nuevo talle', 'talle bebe', 'talles de nene', 'medidas', 'tallas', 'numeracion'],
+    steps: [
+      {
+        route: '/configuracion',
+        target: 'config-tab-talles',
+        title: 'Talles',
+        body: 'Tocá la pestaña «Talles» y después tocá **Siguiente**.',
+      },
+      {
+        route: '/configuracion',
+        target: 'config-talles-form',
+        title: 'Nombre de la escala',
+        body: 'Escribí el «Nombre de la escala», por ejemplo «Bebé».',
+      },
+      {
+        route: '/configuracion',
+        target: 'config-talles-lista',
+        title: 'Los talles, en orden',
+        body: 'Escribí los talles en el orden en que se muestran, separados por coma (p. ej. RN, 0-3, 3-6). No se pueden repetir. Tocá «Agregar» para crearla.',
+      },
+    ],
+  },
+  {
+    id: 'color-agregar',
+    area: 'Administración',
+    title: 'Agregar un color',
+    description: 'Dar de alta un color con su código para el SKU y su muestra.',
+    permissions: ['settings.master.manage'],
+    keywords: ['agregar color', 'nuevo color', 'crear color', 'colores', 'codigo de color', 'muestra de color', 'color del sku', 'variante de color', 'paleta'],
+    steps: [
+      {
+        route: '/configuracion',
+        target: 'config-tab-colores',
+        title: 'Colores',
+        body: 'Tocá la pestaña «Colores» y después tocá **Siguiente**.',
+      },
+      {
+        route: '/configuracion',
+        target: 'config-color-codigo',
+        title: 'Código',
+        body: 'El «Código» se usa para armar el SKU de las variantes, así que conviene que sea corto. Completá también el «Nombre».',
+      },
+      {
+        route: '/configuracion',
+        target: 'config-color-muestra',
+        title: 'Muestra',
+        body: 'Tocá «Muestra» para elegir cómo se ve el color en las pantallas.',
+      },
+      {
+        route: '/configuracion',
+        target: 'config-colores-form',
+        title: 'Agregar',
+        body: 'Tocá «Agregar». Si el código ya existe vas a ver un aviso de registro repetido.',
+      },
+    ],
+  },
+  {
+    id: 'categoria-agregar',
+    area: 'Administración',
+    title: 'Agregar una categoría',
+    description: 'Crear categorías para productos, materiales o gastos.',
+    permissions: ['settings.master.manage'],
+    keywords: ['agregar categoria', 'nueva categoria', 'categorias', 'rubro', 'tipo de producto', 'clasificar', 'categoria de gasto', 'categoria de material', 'familia de productos'],
+    steps: [
+      {
+        route: '/configuracion',
+        target: 'config-tab-categorias',
+        title: 'Categorías',
+        body: 'Tocá la pestaña «Categorías» y después tocá **Siguiente**.',
+      },
+      {
+        route: '/configuracion',
+        target: 'config-categoria-para',
+        title: 'Para qué es',
+        body: 'Escribí el «Nombre» y elegí en «Para» si es de «Productos», «Materiales» o «Gastos».',
+      },
+      {
+        route: '/configuracion',
+        target: 'config-categorias-form',
+        title: 'Agregar',
+        body: 'Tocá «Agregar» y aparece en la lista. Desde esta pantalla solo se agregan: no hay botones para editar ni borrar.',
+      },
+    ],
+  },
+  {
+    id: 'temporada-coleccion',
+    area: 'Administración',
+    title: 'Crear una temporada o colección',
+    description: 'Dar de alta una temporada con su año y las colecciones que la componen.',
+    permissions: ['settings.master.manage'],
+    keywords: ['temporada', 'nueva temporada', 'coleccion', 'nueva coleccion', 'primavera verano', 'otono invierno', 'invierno', 'verano', 'linea', 'lanzamiento'],
+    steps: [
+      {
+        route: '/configuracion',
+        target: 'config-tab-temporadas',
+        title: 'Temporadas y colecciones',
+        body: 'Tocá la pestaña «Temporadas y colecciones» y después tocá **Siguiente**.',
+      },
+      {
+        route: '/configuracion',
+        target: 'config-temporadas-form',
+        title: 'Temporada',
+        body: 'Escribí la «Temporada» (p. ej. Primavera-Verano 2027), revisá el «Año» y tocá «Agregar».',
+      },
+      {
+        route: '/configuracion',
+        target: 'config-colecciones-form',
+        title: 'Colección',
+        body: 'Después escribí la «Colección», elegí a qué «Temporada» pertenece y tocá «Agregar».',
+      },
+    ],
+  },
+  {
+    id: 'centro-de-costo-agregar',
+    area: 'Administración',
+    title: 'Agregar un centro de costo',
+    description: 'Crear un centro de costo para imputar gastos.',
+    permissions: ['settings.master.manage'],
+    keywords: ['centro de costo', 'centros de costo', 'nuevo centro de costo', 'imputar gastos', 'area de gasto', 'sector', 'departamento', 'cost center'],
+    steps: [
+      {
+        route: '/configuracion',
+        target: 'config-tab-centros',
+        title: 'Centros de costo',
+        body: 'Tocá la pestaña «Centros de costo» y después tocá **Siguiente**.',
+      },
+      {
+        route: '/configuracion',
+        target: 'config-centros-form',
+        title: 'Código y nombre',
+        body: 'Completá «Código» (corto, p. ej. PRO, hasta 20 caracteres) y «Nombre», y tocá «Agregar».',
+      },
+    ],
+  },
+  {
+    id: 'unidades-conversiones',
+    area: 'Administración',
+    title: 'Agregar una unidad de medida o una conversión',
+    description: 'Crear unidades (metros, kilos, unidades) y equivalencias entre ellas.',
+    permissions: ['settings.master.manage'],
+    keywords: ['unidad de medida', 'unidades', 'conversion', 'equivalencia', 'metros a centimetros', 'kilos', 'gramos', 'rollo a metros', 'factor de conversion', 'uom'],
+    steps: [
+      {
+        route: '/configuracion',
+        target: 'config-tab-unidades',
+        title: 'Unidades',
+        body: 'Tocá la pestaña «Unidades» y después tocá **Siguiente**.',
+      },
+      {
+        route: '/configuracion',
+        target: 'config-unidades-form',
+        title: 'Nueva unidad',
+        body: 'Completá «Código», «Nombre» y en «Mide» elegí «Unidades», «Longitud», «Peso» o «Superficie». Tocá «Agregar».',
+      },
+      {
+        route: '/configuracion',
+        target: 'config-conversiones-form',
+        title: 'Conversión',
+        body: 'Armá la equivalencia «1 [unidad] equivale a [factor] de [unidad]» y tocá «Agregar». Solo se convierten unidades que miden lo mismo (m ↔ cm); rollo → metros se define en cada tela.',
+      },
+    ],
+  },
+  {
+    id: 'condicion-pago-zona',
+    area: 'Administración',
+    title: 'Agregar una condición de pago o una zona',
+    description: 'Crear condiciones de pago en cuotas y zonas para clasificar clientes.',
+    permissions: ['settings.master.manage'],
+    keywords: ['condicion de pago', 'plazo de pago', '30 60 90', 'cuotas', 'contado', 'dias de pago', 'zona', 'nueva zona', 'zona de venta', 'region', 'plazos'],
+    steps: [
+      {
+        route: '/configuracion',
+        target: 'config-tab-comercial',
+        title: 'Condiciones de pago y zonas',
+        body: 'Tocá la pestaña «Condiciones de pago y zonas» y después tocá **Siguiente**.',
+      },
+      {
+        route: '/configuracion',
+        target: 'config-condiciones-form',
+        title: 'Condición',
+        body: 'En «Condición» escribí cómo se va a llamar, por ejemplo 30/60.',
+      },
+      {
+        route: '/configuracion',
+        target: 'config-condicion-dias',
+        title: 'Días de cada cuota',
+        body: 'Escribí los días de cada cuota separados por coma (p. ej. 30, 60) y tocá «Agregar».',
+      },
+      {
+        route: '/configuracion',
+        target: 'config-zonas-form',
+        title: 'Zonas',
+        body: 'Para una zona, escribí su nombre en «Zona» y tocá «Agregar».',
+      },
+    ],
+  },
+
+  // ───────────────────────── Auditoría ─────────────────────────
+  {
+    id: 'auditoria-consultar',
+    area: 'Administración',
+    title: 'Ver quién modificó algo (auditoría)',
+    description: 'Consultar quién hizo cada cambio, cuándo y qué datos cambió.',
+    permissions: ['audit.view'],
+    keywords: ['auditoria', 'quien modifico', 'quien cambio', 'quien borro', 'historial de cambios', 'registro de actividad', 'log', 'quien hizo', 'rastrear cambios', 'control interno', 'quien anulo'],
+    steps: [
+      {
+        route: '/configuracion/auditoria',
+        target: 'nav-/configuracion/auditoria',
+        title: 'Auditoría',
+        body: 'Acá queda registrado quién hizo qué y cuándo. El registro es de solo inserción: no se puede modificar ni borrar.',
+      },
+      {
+        route: '/configuracion/auditoria',
+        target: 'auditoria-entidad',
+        title: 'Filtrar por entidad',
+        body: 'Elegí qué tipo de dato querés revisar (Terceros, Modelos, Usuarios, Roles…). Lo que no está en la lista, como alertas o exportaciones, se ve con «Todas las entidades».',
+      },
+      {
+        route: '/configuracion/auditoria',
+        target: 'auditoria-tabla',
+        title: 'Los registros',
+        body: 'Cada fila tiene «Fecha», «Usuario», «Entidad» y «Acción» (con «Motivo:» si se indicó uno). Lo más reciente está arriba.',
+      },
+      {
+        route: '/configuracion/auditoria',
+        target: 'auditoria-col-detalle',
+        title: 'Ver qué cambió',
+        body: 'Tocá «Ver cambios» en la fila para ver los datos del cambio; «Ocultar» lo cierra.',
+      },
+      {
+        route: '/configuracion/auditoria',
+        target: 'auditoria-paginas',
+        title: 'Más registros',
+        body: 'Con «Siguiente» y «Anterior» recorrés las páginas de registros más viejos.',
+      },
+    ],
+  },
+
+  // ───────────────────────── Mi cuenta ─────────────────────────
+  {
+    id: 'cuenta-cerrar-sesiones',
+    area: 'Primeros pasos',
+    title: 'Cerrar sesión en otros dispositivos',
+    description: 'Ver dónde está abierta tu cuenta y cerrar las sesiones que no reconozcas.',
+    permissions: [],
+    keywords: ['cerrar sesion', 'cerrar sesiones', 'otros dispositivos', 'deje abierta la sesion', 'sesiones abiertas', 'desconectar', 'celular', 'otra computadora', 'seguridad', 'salir de todos lados'],
+    steps: [
+      {
+        route: '/cuenta',
+        target: 'header-account',
+        title: 'Mi cuenta',
+        body: 'Tocando tu nombre, arriba, llegás siempre a «Mi cuenta».',
+      },
+      {
+        route: '/cuenta',
+        target: 'cuenta-sesiones',
+        title: 'Sesiones abiertas',
+        body: 'Cada línea es un navegador o dispositivo donde está abierta tu cuenta, con su IP, cuándo se inició y su última actividad. «Cerrar» cierra esa sola (si es la actual, te desconecta).',
+      },
+      {
+        route: '/cuenta',
+        target: 'cuenta-cerrar-otras',
+        title: 'Cerrar todas las demás',
+        body: 'Tocá «Cerrar todas las demás» para cerrar todas menos la que estás usando. Vas a ver cuántas sesiones se cerraron.',
+      },
+    ],
+  },
+  {
+    id: 'cuenta-roles-contrasena',
+    area: 'Primeros pasos',
+    title: 'Ver mis roles y cambiar mi contraseña',
+    description: 'Qué roles tenés asignados y qué hacer si necesitás cambiar tu contraseña.',
+    permissions: [],
+    keywords: ['mi cuenta', 'mis roles', 'mis permisos', 'cambiar contraseña', 'cambiar clave', 'password', 'olvide mi contraseña', 'recuperar contraseña', 'que puedo hacer', 'por que no veo', 'mi usuario'],
+    steps: [
+      {
+        route: '/cuenta',
+        target: 'header-account',
+        title: 'Mi cuenta',
+        body: 'Tocando tu nombre, arriba, llegás a «Mi cuenta», con tu nombre y tu email.',
+      },
+      {
+        route: '/cuenta',
+        target: 'cuenta-roles',
+        title: 'Tus roles',
+        body: 'Estos son tus roles: definen qué menús y acciones ves. Si te falta algo, pedíle a quien administra los usuarios que te cambie los roles.',
+      },
+      {
+        route: '/cuenta',
+        title: 'Tu contraseña',
+        body: 'Hoy el sistema no tiene pantalla para cambiar ni recuperar la contraseña, y un administrador tampoco puede restablecerla desde la aplicación. Si necesitás cambiarla, pedíselo al responsable técnico del sistema.',
+      },
+    ],
+  },
+];

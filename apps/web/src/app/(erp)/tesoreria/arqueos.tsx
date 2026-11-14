@@ -95,30 +95,30 @@ export function CashClosings({ accounts }: { accounts: Account[] }) {
       {create.error && <ErrorBox error={create.error} />}
       {boxes.length ? (
         <Can perm="treasury.move">
-          <Card className="p-4">
+          <Card className="p-4" tour="arq-nuevo">
             <h2 className="mb-3 font-medium">Nuevo arqueo</h2>
             <form className="grid gap-4 lg:grid-cols-[1fr_1fr]" onSubmit={submit}>
               <div className="grid gap-3 sm:grid-cols-2">
-                <Field label="Caja" htmlFor="cl-box">
+                <Field label="Caja" htmlFor="cl-box" tour="arq-caja">
                   <Select id="cl-box" value={accountId} onChange={(e) => setSelected(e.target.value)}>
                     {boxes.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
                   </Select>
                 </Field>
-                <Field label="Fecha" htmlFor="cl-date">
+                <Field label="Fecha" htmlFor="cl-date" tour="arq-fecha">
                   <Input id="cl-date" type="date" required max={todayISO()} value={date} onChange={(e) => setDate(e.target.value)} />
                 </Field>
-                <Field label="Efectivo contado" htmlFor="cl-counted">
+                <Field label="Efectivo contado" htmlFor="cl-counted" tour="arq-contado">
                   <Input id="cl-counted" required type="number" min="0" step="0.01" inputMode="decimal" value={counted} onChange={(e) => setCounted(e.target.value)} />
                 </Field>
                 <Field label="Observaciones" htmlFor="cl-notes" className="sm:col-span-2">
                   <Textarea id="cl-notes" rows={2} maxLength={500} value={notes} onChange={(e) => setNotes(e.target.value)} />
                 </Field>
                 <div className="sm:col-span-2">
-                  <Button type="submit" loading={create.isPending} disabled={!p}>Registrar arqueo</Button>
+                  <Button data-tour="arq-registrar" type="submit" loading={create.isPending} disabled={!p}>Registrar arqueo</Button>
                 </div>
               </div>
               {p && (
-                <div className="grid content-start gap-3 sm:grid-cols-2">
+                <div data-tour="arq-resumen" className="grid content-start gap-3 sm:grid-cols-2">
                   <Stat label="Según sistema" value={fmtMoney(p.expected)} hint={p.lastClosing ? `Último arqueo ${fmtDate(p.lastClosing.closingDate)}: ${fmtMoney(p.lastClosing.counted)}` : 'Primer arqueo de esta caja'} />
                   <Stat label="Diferencia" value={difference == null ? '—' : fmtMoney(difference)} tone={difference == null || isZero(difference) ? undefined : isNegative(difference) ? 'danger' : 'warning'} hint={difference == null ? 'Ingresá el conteo' : isZero(difference) ? 'Cuadra' : isNegative(difference) ? 'Faltante' : 'Sobrante'} />
                   <Stat label="Ingresos desde el último" value={fmtMoney(p.incomeSinceLast)} hint={`${p.movementsSinceLast} movimientos`} />

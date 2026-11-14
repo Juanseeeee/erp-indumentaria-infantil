@@ -46,7 +46,7 @@ export default function AuditPage() {
     <div className="max-w-5xl">
       <PageHeader title="Auditoría" description="Quién hizo qué y cuándo. El registro es de solo inserción: no se puede modificar ni borrar." />
       <div className="mb-3 flex gap-2">
-        <Select aria-label="Entidad" className="w-56" value={entity} onChange={(e) => { setEntity(e.target.value); setPage(1); }}>
+        <Select aria-label="Entidad" data-tour="auditoria-entidad" className="w-56" value={entity} onChange={(e) => { setEntity(e.target.value); setPage(1); }}>
           <option value="">Todas las entidades</option>
           {Object.entries(ENTITIES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
         </Select>
@@ -54,7 +54,7 @@ export default function AuditPage() {
       {isLoading ? (
         <Spinner />
       ) : (
-        <Card className="overflow-x-auto">
+        <Card className="overflow-x-auto" tour="auditoria-tabla">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-surface-2/60 text-xs text-muted uppercase">
@@ -62,7 +62,7 @@ export default function AuditPage() {
                 <th className="px-3 py-2 text-left">Usuario</th>
                 <th className="px-3 py-2 text-left">Entidad</th>
                 <th className="px-3 py-2 text-left">Acción</th>
-                <th className="px-3 py-2 text-left">Detalle</th>
+                <th className="px-3 py-2 text-left" data-tour="auditoria-col-detalle">Detalle</th>
               </tr>
             </thead>
             <tbody>
@@ -89,7 +89,7 @@ export default function AuditPage() {
               ))}
             </tbody>
           </table>
-          <div className="flex justify-end gap-2 border-t border-border p-2">
+          <div className="flex justify-end gap-2 border-t border-border p-2" data-tour="auditoria-paginas">
             <Button size="sm" variant="ghost" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>Anterior</Button>
             <Button size="sm" variant="ghost" disabled={(data?.length ?? 0) < 100} onClick={() => setPage((p) => p + 1)}>Siguiente</Button>
           </div>

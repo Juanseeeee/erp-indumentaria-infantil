@@ -64,9 +64,9 @@ export function RecurringExpenses({ accounts }: { accounts: Account[] }) {
       {list.error && <ErrorBox error={list.error} />}
       {create.error && <ErrorBox error={create.error} />}
       <Can perm="treasury.move">
-        <div><Button variant="secondary" onClick={() => setShowForm((v) => !v)} aria-expanded={showForm}>Nuevo gasto recurrente</Button></div>
+        <div><Button data-tour="gr-nuevo" variant="secondary" onClick={() => setShowForm((v) => !v)} aria-expanded={showForm}>Nuevo gasto recurrente</Button></div>
         {showForm && (
-          <Card className="p-4">
+          <Card className="p-4" tour="gr-form">
             <form
               className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3"
               onSubmit={(e: FormEvent) => {
@@ -74,7 +74,7 @@ export function RecurringExpenses({ accounts }: { accounts: Account[] }) {
                 create.mutate();
               }}
             >
-              <Field label="Nombre" htmlFor="rt-name"><Input id="rt-name" required maxLength={100} placeholder="Alquiler depósito" value={form.name} onChange={set('name')} /></Field>
+              <Field label="Nombre" htmlFor="rt-name" tour="gr-nombre"><Input id="rt-name" required maxLength={100} placeholder="Alquiler depósito" value={form.name} onChange={set('name')} /></Field>
               <Field label="Categoría" htmlFor="rt-cat">
                 <Select id="rt-cat" required value={form.categoryId} onChange={set('categoryId')}>
                   <option value="">Elegí la categoría</option>
@@ -87,22 +87,22 @@ export function RecurringExpenses({ accounts }: { accounts: Account[] }) {
                   {(md?.costCenters ?? []).filter((c) => c.isActive).map((c) => <option key={c.id} value={c.id}>{c.code} · {c.name}</option>)}
                 </Select>
               </Field>
-              <Field label="Se paga desde" htmlFor="rt-acc">
+              <Field label="Se paga desde" htmlFor="rt-acc" tour="gr-cuenta">
                 <Select id="rt-acc" required value={form.cashAccountId} onChange={set('cashAccountId')}>
                   <option value="">Elegí la cuenta</option>
                   {payable.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
                 </Select>
               </Field>
-              <Field label="Importe habitual" htmlFor="rt-amount" hint="Se puede corregir cada mes">
+              <Field label="Importe habitual" htmlFor="rt-amount" tour="gr-importe" hint="Se puede corregir cada mes">
                 <Input id="rt-amount" required type="number" min="0.01" step="0.01" inputMode="decimal" value={form.amount} onChange={set('amount')} />
               </Field>
-              <Field label="Vence el día" htmlFor="rt-day" hint="Del 1 al 28">
+              <Field label="Vence el día" htmlFor="rt-day" tour="gr-dia" hint="Del 1 al 28">
                 <Input id="rt-day" required type="number" min={1} max={28} value={form.dayOfMonth} onChange={set('dayOfMonth')} />
               </Field>
-              <Field label="Desde" htmlFor="rt-start" hint="Primer mes que cubre">
+              <Field label="Desde" htmlFor="rt-start" tour="gr-desde" hint="Primer mes que cubre">
                 <Input id="rt-start" required type="date" value={form.startsOn} onChange={set('startsOn')} />
               </Field>
-              <div className="sm:col-span-2 lg:col-span-3"><Button type="submit" loading={create.isPending}>Crear</Button></div>
+              <div className="sm:col-span-2 lg:col-span-3"><Button data-tour="gr-crear" type="submit" loading={create.isPending}>Crear</Button></div>
             </form>
           </Card>
         )}
@@ -112,7 +112,7 @@ export function RecurringExpenses({ accounts }: { accounts: Account[] }) {
         <Spinner />
       ) : templates.length ? (
         templates.map((t) => (
-          <section key={t.id} aria-labelledby={`tpl-${t.id}`}>
+          <section key={t.id} data-tour="gr-plantilla" aria-labelledby={`tpl-${t.id}`}>
             <Card className="p-4">
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div>
@@ -124,7 +124,7 @@ export function RecurringExpenses({ accounts }: { accounts: Account[] }) {
                   </p>
                 </div>
                 {t.isActive && can('treasury.move') && (
-                  <Button size="sm" variant="ghost" loading={deactivate.isPending && deactivate.variables === t.id} onClick={() => deactivate.mutate(t.id)}>Desactivar</Button>
+                  <Button data-tour="gr-desactivar" size="sm" variant="ghost" loading={deactivate.isPending && deactivate.variables === t.id} onClick={() => deactivate.mutate(t.id)}>Desactivar</Button>
                 )}
               </div>
               {t.isActive && (t.pending.length ? (
@@ -157,7 +157,7 @@ function PendingMonth({ template, pending, canAct, onDone }: { template: Templat
   });
   const label = `${template.name} ${monthName(pending.period)}`;
   return (
-    <li className="flex flex-wrap items-end gap-3 rounded-md border border-border p-3">
+    <li data-tour="gr-mes-pendiente" className="flex flex-wrap items-end gap-3 rounded-md border border-border p-3">
       <div className="min-w-40">
         <p className="font-medium capitalize">{monthName(pending.period)}</p>
         <p className="text-sm text-muted">
@@ -172,7 +172,7 @@ function PendingMonth({ template, pending, canAct, onDone }: { template: Templat
           <Field label="Comprobante" htmlFor={`doc-${template.id}-${pending.period}`}>
             <Input id={`doc-${template.id}-${pending.period}`} aria-label={`Comprobante de ${label}`} maxLength={100} className="w-44" value={doc} onChange={(e) => setDoc(e.target.value)} />
           </Field>
-          <Button size="sm" loading={register.isPending} onClick={() => register.mutate()} aria-label={`Registrar ${label}`}>Registrar</Button>
+          <Button data-tour="gr-registrar" size="sm" loading={register.isPending} onClick={() => register.mutate()} aria-label={`Registrar ${label}`}>Registrar</Button>
         </>
       )}
     </li>

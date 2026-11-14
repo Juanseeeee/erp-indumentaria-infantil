@@ -115,7 +115,7 @@ export default function ExpensesPage() {
         row.original.status === 'VOIDED' ? (
           <Badge tone="danger">Anulado</Badge>
         ) : can('treasury.move') ? (
-          <Button variant="secondary" size="sm" onClick={(e) => { e.stopPropagation(); setVoiding(row.original); }}>Anular</Button>
+          <Button data-tour="gas-anular" variant="secondary" size="sm" onClick={(e) => { e.stopPropagation(); setVoiding(row.original); }}>Anular</Button>
         ) : (
           <Badge tone="success">Registrado</Badge>
         ),
@@ -127,9 +127,9 @@ export default function ExpensesPage() {
       <PageHeader
         title="Gastos"
         description="Gastos pagados desde caja, banco o billetera, por categoría y centro de costo. Las facturas de proveedores a plazo se cargan en Compras."
-        actions={tab === 'gastos' && <Can perm="treasury.move"><Button onClick={() => setShowForm((v) => !v)}><Plus className="size-4" /> Nuevo gasto</Button></Can>}
+        actions={tab === 'gastos' && <Can perm="treasury.move"><Button data-tour="gas-nuevo" onClick={() => setShowForm((v) => !v)}><Plus className="size-4" /> Nuevo gasto</Button></Can>}
       />
-      <Tabs tabs={[{ id: 'gastos', label: 'Gastos' }, { id: 'recurrentes', label: 'Recurrentes' }]} value={tab} onChange={setTab} />
+      <Tabs tabs={[{ id: 'gastos', label: 'Gastos', tour: 'gas-tab-gastos' }, { id: 'recurrentes', label: 'Recurrentes', tour: 'gas-tab-recurrentes' }]} value={tab} onChange={setTab} />
       {tab === 'recurrentes' ? (
         <RecurringExpenses accounts={accountsQuery.data ?? []} />
       ) : (
@@ -139,42 +139,42 @@ export default function ExpensesPage() {
           {voidExpense.error && <ErrorBox error={voidExpense.error} />}
 
           {showForm && (
-            <Card className="mb-4 p-4">
+            <Card className="mb-4 p-4" tour="gas-form">
               <h2 className="mb-3 font-medium">Nuevo gasto</h2>
               {!categories.length || !centers.length ? (
                 <p className="text-sm text-muted">Primero cargá categorías de gastos y centros de costo en Configuración.</p>
               ) : (
                 <form className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" onSubmit={submit}>
-                  <Field label="Fecha" htmlFor="ex-date"><Input id="ex-date" type="date" required value={form.date} onChange={set('date')} /></Field>
-                  <Field label="Categoría" htmlFor="ex-cat">
+                  <Field label="Fecha" htmlFor="ex-date" tour="gas-fecha"><Input id="ex-date" type="date" required value={form.date} onChange={set('date')} /></Field>
+                  <Field label="Categoría" htmlFor="ex-cat" tour="gas-categoria">
                     <Select id="ex-cat" required value={form.categoryId} onChange={set('categoryId')}>
                       <option value="">Elegí la categoría</option>
                       {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                     </Select>
                   </Field>
-                  <Field label="Centro de costo" htmlFor="ex-cc">
+                  <Field label="Centro de costo" htmlFor="ex-cc" tour="gas-centro">
                     <Select id="ex-cc" required value={form.costCenterId} onChange={set('costCenterId')}>
                       <option value="">Elegí el centro</option>
                       {centers.map((c) => <option key={c.id} value={c.id}>{c.code} · {c.name}</option>)}
                     </Select>
                   </Field>
-                  <Field label="Pagado desde" htmlFor="ex-acc" hint={accounts.find((a) => a.id === form.cashAccountId) ? `Saldo ${fmtMoney(accounts.find((a) => a.id === form.cashAccountId)!.operationBalance)}` : undefined}>
+                  <Field label="Pagado desde" htmlFor="ex-acc" tour="gas-pagado-desde" hint={accounts.find((a) => a.id === form.cashAccountId) ? `Saldo ${fmtMoney(accounts.find((a) => a.id === form.cashAccountId)!.operationBalance)}` : undefined}>
                     <Select id="ex-acc" required value={form.cashAccountId} onChange={set('cashAccountId')}>
                       <option value="">Elegí la cuenta</option>
                       {accounts.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
                     </Select>
                   </Field>
-                  <Field label="Concepto" htmlFor="ex-desc" className="sm:col-span-2"><Input id="ex-desc" required maxLength={300} value={form.description} onChange={set('description')} /></Field>
-                  <Field label="Comprobante" htmlFor="ex-doc" hint="Ticket o factura"><Input id="ex-doc" maxLength={100} value={form.documentReference} onChange={set('documentReference')} /></Field>
-                  <Field label="Importe" htmlFor="ex-amount"><Input id="ex-amount" required type="number" min="0.01" step="0.01" inputMode="decimal" value={form.amount} onChange={set('amount')} /></Field>
-                  <div className="sm:col-span-2 lg:col-span-4"><Button type="submit" loading={create.isPending}>Registrar gasto</Button></div>
+                  <Field label="Concepto" htmlFor="ex-desc" className="sm:col-span-2" tour="gas-concepto"><Input id="ex-desc" required maxLength={300} value={form.description} onChange={set('description')} /></Field>
+                  <Field label="Comprobante" htmlFor="ex-doc" hint="Ticket o factura" tour="gas-comprobante"><Input id="ex-doc" maxLength={100} value={form.documentReference} onChange={set('documentReference')} /></Field>
+                  <Field label="Importe" htmlFor="ex-amount" tour="gas-importe"><Input id="ex-amount" required type="number" min="0.01" step="0.01" inputMode="decimal" value={form.amount} onChange={set('amount')} /></Field>
+                  <div className="sm:col-span-2 lg:col-span-4"><Button data-tour="gas-registrar" type="submit" loading={create.isPending}>Registrar gasto</Button></div>
                 </form>
               )}
             </Card>
           )}
 
           {voiding && (
-            <div className="mb-4">
+            <div className="mb-4" data-tour="gas-motivo-anulacion">
               <ConfirmPanel
                 title={`¿Anular el gasto ${voiding.number}?`}
                 impact={<>Vuelven {fmtMoney(voiding.amount)} a {voiding.account} con fecha de hoy y el gasto deja de sumar en los totales.</>}
@@ -189,7 +189,7 @@ export default function ExpensesPage() {
             </div>
           )}
 
-          <Card className="mb-4 p-4">
+          <Card className="mb-4 p-4" tour="gas-filtros">
             <div className="flex flex-wrap items-end gap-3">
               <Field label="Desde" htmlFor="f-from"><Input id="f-from" type="date" value={from} onChange={(e) => { setFrom(e.target.value); setPage(1); }} /></Field>
               <Field label="Hasta" htmlFor="f-to"><Input id="f-to" type="date" value={to} onChange={(e) => { setTo(e.target.value); setPage(1); }} /></Field>
@@ -203,7 +203,7 @@ export default function ExpensesPage() {
           </Card>
 
           {data && (
-            <div className="mb-4 grid gap-4 lg:grid-cols-[minmax(0,14rem)_1fr_1fr]">
+            <div data-tour="gas-resumen" className="mb-4 grid gap-4 lg:grid-cols-[minmax(0,14rem)_1fr_1fr]">
               <Stat label="Total del período" value={fmtMoney(data.totalAmount)} hint="Sin gastos anulados" />
               <SummaryCard title="Por centro de costo" rows={data.byCostCenter.map((r) => ({ key: r.id, label: `${r.code} · ${r.name}`, total: r.total }))} grand={data.totalAmount} />
               <SummaryCard title="Por categoría" rows={data.byCategory.map((r) => ({ key: r.id, label: r.name, total: r.total }))} grand={data.totalAmount} />

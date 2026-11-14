@@ -73,10 +73,10 @@ function StockList() {
         actions={
           <>
             <Can perm="inventory.transfer">
-              <LinkButton variant="secondary" href="/stock/documentos/nuevo?tipo=TRANSFER">Transferir</LinkButton>
+              <LinkButton variant="secondary" href="/stock/documentos/nuevo?tipo=TRANSFER" tour="stock-transferir">Transferir</LinkButton>
             </Can>
             <Can perm="inventory.adjust">
-              <LinkButton href="/stock/documentos/nuevo?tipo=ADJUSTMENT">
+              <LinkButton href="/stock/documentos/nuevo?tipo=ADJUSTMENT" tour="stock-ajuste">
                 <Plus className="size-4" /> Ajuste
               </LinkButton>
             </Can>
@@ -101,16 +101,16 @@ function StockList() {
         onRowClick={(r) => router.push(`/stock/${r.item_id}`)}
         toolbar={
           <>
-            <Select aria-label="Depósito" className="w-52" value={warehouseId} onChange={(e) => { setWarehouseId(e.target.value); setPage(1); }}>
+            <Select data-tour="stock-deposito" aria-label="Depósito" className="w-52" value={warehouseId} onChange={(e) => { setWarehouseId(e.target.value); setPage(1); }}>
               <option value="">Todos los depósitos</option>
               {md?.warehouses.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
             </Select>
-            <Select aria-label="Tipo" className="w-36" value={kind} onChange={(e) => { setKind(e.target.value); setPage(1); }}>
+            <Select data-tour="stock-tipo" aria-label="Tipo" className="w-36" value={kind} onChange={(e) => { setKind(e.target.value); setPage(1); }}>
               <option value="">Todo</option>
               <option value="VARIANT">Prendas</option>
               <option value="MATERIAL">Materiales</option>
             </Select>
-            <label className="flex items-center gap-2 text-sm">
+            <label data-tour="stock-solo-critico" className="flex items-center gap-2 text-sm">
               <input type="checkbox" checked={onlyCritical} onChange={(e) => { setOnlyCritical(e.target.checked); setPage(1); }} />
               Solo crítico
             </label>

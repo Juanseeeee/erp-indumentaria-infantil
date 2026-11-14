@@ -31,17 +31,17 @@ export default function AccountPage() {
   return (
     <div className="max-w-3xl">
       <PageHeader title="Mi cuenta" description={`${me?.user.name} · ${me?.user.email}`} />
-      <Card className="mb-4 p-4 text-sm">
+      <Card className="mb-4 p-4 text-sm" tour="cuenta-roles">
         <p className="font-medium">Roles</p>
         <p className="text-muted">{me?.roles.map((r) => r.name).join(', ')}</p>
       </Card>
       <div className="mb-2 flex items-center justify-between">
         <h2 className="font-medium">Sesiones abiertas</h2>
-        <Button size="sm" variant="secondary" loading={revoke.isPending} onClick={() => revoke.mutate(undefined)}>
+        <Button size="sm" variant="secondary" data-tour="cuenta-cerrar-otras" loading={revoke.isPending} onClick={() => revoke.mutate(undefined)}>
           Cerrar todas las demás
         </Button>
       </div>
-      <Card>
+      <Card tour="cuenta-sesiones">
         <ul>
           {sessions?.map((s) => (
             <li key={s.id} className="flex items-center justify-between gap-3 border-b border-border px-4 py-3 text-sm last:border-0">

@@ -88,10 +88,10 @@ export default function ReportPage() {
         actions={
           can('data.export') && data ? (
             <>
-              <Button variant="secondary" onClick={() => exportAs('xlsx')} loading={exporting === 'xlsx'} disabled={!!exporting || isFetching}>
+              <Button data-tour="reporte-excel" variant="secondary" onClick={() => exportAs('xlsx')} loading={exporting === 'xlsx'} disabled={!!exporting || isFetching}>
                 <FileSpreadsheet className="size-4" aria-hidden /> Excel
               </Button>
-              <Button variant="secondary" onClick={() => exportAs('pdf')} loading={exporting === 'pdf'} disabled={!!exporting || isFetching}>
+              <Button data-tour="reporte-pdf" variant="secondary" onClick={() => exportAs('pdf')} loading={exporting === 'pdf'} disabled={!!exporting || isFetching}>
                 <FileDown className="size-4" aria-hidden /> PDF
               </Button>
             </>
@@ -100,7 +100,7 @@ export default function ReportPage() {
       />
 
       {def.params.length > 0 && (
-        <Card className="mb-4 p-4">
+        <Card className="mb-4 p-4" tour="reporte-parametros">
           <form className="flex flex-wrap items-end gap-4" onSubmit={submit}>
             {def.params.map((p) => {
               const id = `rp-${p.key}`;
@@ -125,7 +125,7 @@ export default function ReportPage() {
                 </Field>
               );
             })}
-            <Button type="submit" disabled={invalidRange} loading={isFetching}>Ver reporte</Button>
+            <Button data-tour="reporte-ver" type="submit" disabled={invalidRange} loading={isFetching}>Ver reporte</Button>
           </form>
           {invalidRange && <p className="mt-2 text-sm text-danger" role="alert">La fecha desde no puede ser posterior a la fecha hasta.</p>}
         </Card>
@@ -138,7 +138,7 @@ export default function ReportPage() {
       ) : !data ? (
         <Spinner />
       ) : (
-        <Card className={cn(isFetching && 'opacity-60')}>
+        <Card className={cn(isFetching && 'opacity-60')} tour="reporte-resultado">
           <p className="border-b border-border px-4 py-3 text-sm text-muted">{data.subtitle} · {data.rows.length} {data.rows.length === 1 ? 'fila' : 'filas'}</p>
           {data.rows.length ? (
             <div className="overflow-x-auto">

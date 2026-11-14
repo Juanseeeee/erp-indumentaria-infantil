@@ -109,7 +109,7 @@ export function Transfers({ accounts }: { accounts: Account[] }) {
         row.original.status === 'VOIDED' ? (
           <Badge tone="danger">Anulada</Badge>
         ) : can('treasury.move') ? (
-          <Button variant="secondary" onClick={(e) => { e.stopPropagation(); setVoiding(row.original); }}>Anular</Button>
+          <Button data-tour="tr-anular" variant="secondary" onClick={(e) => { e.stopPropagation(); setVoiding(row.original); }}>Anular</Button>
         ) : (
           <Badge tone="success">Registrada</Badge>
         ),
@@ -121,38 +121,38 @@ export function Transfers({ accounts }: { accounts: Account[] }) {
       {create.error && <ErrorBox error={create.error} />}
       {voidTransfer.error && <ErrorBox error={voidTransfer.error} />}
       <Can perm="treasury.move">
-        <Card className="p-4">
+        <Card className="p-4" tour="tr-nueva">
           <h2 className="mb-3 font-medium">Nueva transferencia</h2>
           <form className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4" onSubmit={submit}>
-            <Field label="Desde" htmlFor="tr-from" hint={from ? `Saldo ${fmtMoney(from.operationBalance)}` : undefined}>
+            <Field label="Desde" htmlFor="tr-from" tour="tr-desde" hint={from ? `Saldo ${fmtMoney(from.operationBalance)}` : undefined}>
               <Select id="tr-from" required value={fromId} onChange={(e) => setFromId(e.target.value)}>
                 <option value="">Elegí la cuenta</option>
                 {usable.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
               </Select>
             </Field>
-            <Field label="Hacia" htmlFor="tr-to">
+            <Field label="Hacia" htmlFor="tr-to" tour="tr-hacia">
               <Select id="tr-to" required value={toId} onChange={(e) => setToId(e.target.value)}>
                 <option value="">Elegí la cuenta</option>
                 {usable.filter((a) => a.id !== fromId && a.type !== 'CARD_CLEARING').map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
               </Select>
             </Field>
-            <Field label="Importe" htmlFor="tr-amount">
+            <Field label="Importe" htmlFor="tr-amount" tour="tr-importe">
               <Input id="tr-amount" required type="number" min="0.01" step="0.01" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} />
             </Field>
-            <Field label="Comisión" htmlFor="tr-fee" hint="Se descuenta de lo que llega">
+            <Field label="Comisión" htmlFor="tr-fee" tour="tr-comision" hint="Se descuenta de lo que llega">
               <Input id="tr-fee" type="number" min="0" step="0.01" inputMode="decimal" value={fee} onChange={(e) => setFee(e.target.value)} />
             </Field>
             <Field label="Fecha" htmlFor="tr-date">
               <Input id="tr-date" required type="date" value={date} onChange={(e) => setDate(e.target.value)} />
             </Field>
-            <Field label="Disponible desde" htmlFor="tr-value" hint="Si se acredita otro día">
+            <Field label="Disponible desde" htmlFor="tr-value" tour="tr-disponible" hint="Si se acredita otro día">
               <Input id="tr-value" type="date" min={date} value={valueDate} onChange={(e) => setValueDate(e.target.value)} />
             </Field>
             <Field label="Concepto" htmlFor="tr-concept" className="sm:col-span-2">
               <Input id="tr-concept" maxLength={300} value={concept} onChange={(e) => setConcept(e.target.value)} placeholder="Extracción para caja, liquidación de tarjetas…" />
             </Field>
             <div className="flex items-center gap-3 sm:col-span-2 lg:col-span-4">
-              <Button type="submit" loading={create.isPending}>Transferir</Button>
+              <Button data-tour="tr-transferir" type="submit" loading={create.isPending}>Transferir</Button>
               {Number(fee) > 0 && received > 0 && <span className="text-sm text-muted">Llegan {fmtMoney(received.toFixed(2))}</span>}
             </div>
           </form>

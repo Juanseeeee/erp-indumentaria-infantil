@@ -61,7 +61,7 @@ export default function SalesDocumentsPage() {
       <PageHeader
         title="Comprobantes de venta"
         description="Facturas, notas de crédito y notas de débito con su autorización de ARCA."
-        actions={<Can perm="sales.invoice"><LinkButton href="/ventas/comprobantes/nuevo"><Plus className="size-4" /> Facturar remitos</LinkButton></Can>}
+        actions={<Can perm="sales.invoice"><LinkButton href="/ventas/comprobantes/nuevo" tour="comprobantes-facturar-remitos"><Plus className="size-4" /> Facturar remitos</LinkButton></Can>}
       />
       {simulated && (
         <p className="mb-3 rounded-md border border-warning/40 bg-warning-soft px-3 py-2 text-sm">
@@ -79,7 +79,7 @@ export default function SalesDocumentsPage() {
         loading={isLoading}
         onRowClick={(r) => router.push(`/ventas/comprobantes/${r.id}`)}
         toolbar={
-          <Select aria-label="Tipo" className="w-56" value={kind} onChange={(e) => { setKind(e.target.value); setPage(1); }}>
+          <Select aria-label="Tipo" data-tour="comprobantes-filtro-tipo" className="w-56" value={kind} onChange={(e) => { setKind(e.target.value); setPage(1); }}>
             <option value="">Todos los tipos</option>
             <option value="F">Facturas</option>
             <option value="NC">Notas de crédito</option>

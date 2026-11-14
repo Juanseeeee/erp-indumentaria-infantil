@@ -63,43 +63,43 @@ export default function NewProductionOrderPage() {
     <div className="max-w-5xl">
       <PageHeader title="Nueva orden de producción" description="Elegí el modelo y cargá las cantidades por talle y color. Podés pegar desde Excel." />
       <Card className="mb-4 grid grid-cols-1 gap-4 p-4 sm:grid-cols-3">
-        <Field label="Modelo" htmlFor="product" className="sm:col-span-3">
+        <Field tour="op-nueva-modelo" label="Modelo" htmlFor="product" className="sm:col-span-3">
           <Select id="product" value={productId} onChange={(e) => { setProductId(e.target.value); setQty({}); }}>
             <option value="">Elegí un modelo…</option>
             {products.data?.rows.map((p) => <option key={p.id} value={p.id}>{p.code} · {p.name}</option>)}
           </Select>
         </Field>
-        <Field label="Materiales desde" htmlFor="mwh">
+        <Field tour="op-nueva-deposito-materiales" label="Materiales desde" htmlFor="mwh">
           <Select id="mwh" value={form.materialsWarehouseId} onChange={set('materialsWarehouseId')}>
             <option value="">Elegí…</option>
             {own.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
           </Select>
         </Field>
-        <Field label="Ingresa producto terminado a" htmlFor="owh">
+        <Field tour="op-nueva-deposito-terminado" label="Ingresa producto terminado a" htmlFor="owh">
           <Select id="owh" value={form.outputWarehouseId} onChange={set('outputWarehouseId')}>
             <option value="">Elegí…</option>
             {own.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
           </Select>
         </Field>
-        <Field label="Segunda selección a" htmlFor="swh" hint="Opcional">
+        <Field tour="op-nueva-deposito-segunda" label="Segunda selección a" htmlFor="swh" hint="Opcional">
           <Select id="swh" value={form.secondsWarehouseId} onChange={set('secondsWarehouseId')}>
             <option value="">Sin segunda selección</option>
             {own.filter((w) => w.id !== form.outputWarehouseId).map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
           </Select>
         </Field>
-        <Field label="Inicio previsto" htmlFor="start"><Input id="start" type="date" value={form.plannedStart} onChange={set('plannedStart')} /></Field>
-        <Field label="Entrega comprometida" htmlFor="due"><Input id="due" type="date" value={form.dueDate} onChange={set('dueDate')} /></Field>
-        <Field label="Prioridad" htmlFor="prio">
+        <Field tour="op-nueva-inicio" label="Inicio previsto" htmlFor="start"><Input id="start" type="date" value={form.plannedStart} onChange={set('plannedStart')} /></Field>
+        <Field tour="op-nueva-entrega" label="Entrega comprometida" htmlFor="due"><Input id="due" type="date" value={form.dueDate} onChange={set('dueDate')} /></Field>
+        <Field tour="op-nueva-prioridad" label="Prioridad" htmlFor="prio">
           <Select id="prio" value={form.priority} onChange={set('priority')}>
             <option value="1">Alta</option>
             <option value="2">Normal</option>
             <option value="3">Baja</option>
           </Select>
         </Field>
-        <Field label="Observaciones" htmlFor="notes" className="sm:col-span-3"><Textarea id="notes" value={form.notes} onChange={set('notes')} /></Field>
+        <Field tour="op-nueva-observaciones" label="Observaciones" htmlFor="notes" className="sm:col-span-3"><Textarea id="notes" value={form.notes} onChange={set('notes')} /></Field>
       </Card>
       {productId && (
-        <Card className="mb-4 p-4">
+        <Card className="mb-4 p-4" tour="op-nueva-cantidades">
           {matrix.data ? (
             <>
               <p className="mb-2 text-sm text-muted">Cantidades a fabricar (en gris, el stock disponible de cada variante).</p>
@@ -119,6 +119,7 @@ export default function NewProductionOrderPage() {
       )}
       <div className="flex items-center gap-2">
         <Button
+          data-tour="op-nueva-crear"
           loading={create.isPending}
           disabled={!productId || !total || !form.materialsWarehouseId || !form.outputWarehouseId}
           onClick={() => create.mutate()}

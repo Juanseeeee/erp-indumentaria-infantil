@@ -40,15 +40,15 @@ interface BankAccount {
 
 const FILTERS = {
   THIRD: [
-    { id: 'IN_PORTFOLIO', label: 'En cartera' },
-    { id: 'DEPOSITED', label: 'Depositados' },
+    { id: 'IN_PORTFOLIO', label: 'En cartera', tour: 'chq-filtro-en-cartera' },
+    { id: 'DEPOSITED', label: 'Depositados', tour: 'chq-filtro-depositados' },
     { id: 'CREDITED', label: 'Acreditados' },
     { id: 'DELIVERED', label: 'Endosados' },
-    { id: 'REJECTED', label: 'Rechazados' },
+    { id: 'REJECTED', label: 'Rechazados', tour: 'chq-filtro-rechazados' },
     { id: '', label: 'Todos' },
   ],
   OWN: [
-    { id: 'ISSUED', label: 'Emitidos' },
+    { id: 'ISSUED', label: 'Emitidos', tour: 'chq-filtro-emitidos' },
     { id: 'DEBITED', label: 'Debitados' },
     { id: 'VOIDED', label: 'Anulados' },
     { id: '', label: 'Todos' },
@@ -111,7 +111,7 @@ export function ChequePortfolio({ banks }: { banks: BankAccount[] }) {
 
   return (
     <div>
-      <div className="mb-4 flex gap-2">
+      <div data-tour="chq-tipo" className="mb-4 flex gap-2">
         {(['THIRD', 'OWN'] as const).map((o) => (
           <Button
             key={o}
@@ -124,12 +124,12 @@ export function ChequePortfolio({ banks }: { banks: BankAccount[] }) {
         ))}
       </div>
       {ownership === 'OWN' ? (
-        <div className="mb-4 grid gap-3 sm:grid-cols-2">
+        <div data-tour="chq-resumen" className="mb-4 grid gap-3 sm:grid-cols-2">
           <Stat label="Emitidos sin debitar" value={fmtMoney(sum('ISSUED')?.amount ?? '0')} hint={`${sum('ISSUED')?.count ?? 0} cheques`} tone={sum('ISSUED') ? 'warning' : undefined} />
           <Stat label="Debitados" value={fmtMoney(sum('DEBITED')?.amount ?? '0')} hint={`${sum('DEBITED')?.count ?? 0} cheques`} />
         </div>
       ) : (
-        <div className="mb-4 grid gap-3 sm:grid-cols-3">
+        <div data-tour="chq-resumen" className="mb-4 grid gap-3 sm:grid-cols-3">
           <Stat label="En cartera" value={fmtMoney(sum('IN_PORTFOLIO')?.amount ?? '0')} hint={`${sum('IN_PORTFOLIO')?.count ?? 0} cheques`} />
           <Stat label="Depositados sin acreditar" value={fmtMoney(sum('DEPOSITED')?.amount ?? '0')} hint={`${sum('DEPOSITED')?.count ?? 0} cheques`} tone={sum('DEPOSITED') ? 'warning' : undefined} />
           <Stat label="Rechazados" value={fmtMoney(sum('REJECTED')?.amount ?? '0')} hint={`${sum('REJECTED')?.count ?? 0} cheques`} tone={sum('REJECTED') ? 'danger' : undefined} />
@@ -139,7 +139,7 @@ export function ChequePortfolio({ banks }: { banks: BankAccount[] }) {
       {list.error && <ErrorBox error={list.error} />}
 
       {action && (
-        <Card className="mb-4 p-4">
+        <Card className="mb-4 p-4" tour="chq-accion">
           <p className="font-medium">
             {action.kind === 'DEPOSIT' ? 'Depositar' : action.kind === 'CREDIT' ? 'Registrar acreditación de' : action.kind === 'DEBIT' ? 'Registrar el débito de' : 'Registrar rechazo de'} {action.cheque.isEcheq ? 'e-cheq' : 'cheque'} {action.cheque.bank} n.º {action.cheque.number} · {fmtMoney(action.cheque.amount)}
           </p>
@@ -171,6 +171,7 @@ export function ChequePortfolio({ banks }: { banks: BankAccount[] }) {
           </div>
           <div className="mt-4 flex gap-2">
             <Button
+              data-tour="chq-confirmar"
               variant={action.kind === 'REJECT' ? 'danger' : 'primary'}
               loading={run.isPending}
               disabled={(action.kind === 'DEPOSIT' && !activeBanks.length) || (action.kind === 'REJECT' && reason.trim().length < 3)}
@@ -184,7 +185,7 @@ export function ChequePortfolio({ banks }: { banks: BankAccount[] }) {
         </Card>
       )}
 
-      <Card className="overflow-hidden">
+      <Card className="overflow-hidden" tour="chq-lista">
         {list.isLoading ? (
           <Spinner />
         ) : !list.data?.rows.length ? (
@@ -237,10 +238,10 @@ export function ChequePortfolio({ banks }: { banks: BankAccount[] }) {
                       <td className="px-3 py-2 text-right whitespace-nowrap">
                         {can('treasury.move') && (
                           <div className="flex justify-end gap-1">
-                            {events.includes('DEPOSIT') && <Button variant="secondary" onClick={() => open(c, 'DEPOSIT')}>Depositar</Button>}
-                            {events.includes('CREDIT') && <Button variant="secondary" onClick={() => open(c, 'CREDIT')}>Acreditado</Button>}
-                            {events.includes('REJECT') && <Button variant="ghost" onClick={() => open(c, 'REJECT')}>Rechazo</Button>}
-                            {events.includes('DEBIT') && <Button variant="secondary" onClick={() => open(c, 'DEBIT')}>Debitado</Button>}
+                            {events.includes('DEPOSIT') && <Button data-tour="chq-depositar" variant="secondary" onClick={() => open(c, 'DEPOSIT')}>Depositar</Button>}
+                            {events.includes('CREDIT') && <Button data-tour="chq-acreditado" variant="secondary" onClick={() => open(c, 'CREDIT')}>Acreditado</Button>}
+                            {events.includes('REJECT') && <Button data-tour="chq-rechazo" variant="ghost" onClick={() => open(c, 'REJECT')}>Rechazo</Button>}
+                            {events.includes('DEBIT') && <Button data-tour="chq-debitado" variant="secondary" onClick={() => open(c, 'DEBIT')}>Debitado</Button>}
                           </div>
                         )}
                       </td>

@@ -77,23 +77,23 @@ export default function PaymentPage({ params }: { params: Promise<{ id: string }
   if (error || !p) return <ErrorBox error={error} />;
   return (
     <div className="max-w-3xl">
-      <div className="print-hide mb-4 flex items-center gap-2">
+      <div data-tour="op-detalle-acciones" className="print-hide mb-4 flex items-center gap-2">
         <PaymentStatus status={p.status} />
         {p.status === 'POSTED' && !isZero(p.unapplied) && <Badge tone="warning">Anticipo {fmtMoney(p.unapplied)}</Badge>}
         <div className="ml-auto flex gap-2">
-          <Link href={`/cuentas-a-pagar/${p.supplier?.id}`}><Button variant="secondary">Cuenta corriente</Button></Link>
-          {p.status === 'POSTED' && <Can perm="payables.pay"><Button variant="secondary" onClick={() => setVoiding(true)}>Anular</Button></Can>}
+          <Link href={`/cuentas-a-pagar/${p.supplier?.id}`}><Button data-tour="op-detalle-cuenta-corriente" variant="secondary">Cuenta corriente</Button></Link>
+          {p.status === 'POSTED' && <Can perm="payables.pay"><Button data-tour="op-detalle-anular" variant="secondary" onClick={() => setVoiding(true)}>Anular</Button></Can>}
           {p.status === 'PENDING_APPROVAL' && (
             <Can perm="payables.approve">
-              <Button variant="secondary" onClick={() => setRejecting(true)}>Rechazar</Button>
-              <Button loading={approve.isPending} onClick={() => approve.mutate()}>Aprobar y pagar</Button>
+              <Button data-tour="op-detalle-rechazar" variant="secondary" onClick={() => setRejecting(true)}>Rechazar</Button>
+              <Button data-tour="op-detalle-aprobar" loading={approve.isPending} onClick={() => approve.mutate()}>Aprobar y pagar</Button>
             </Can>
           )}
           <PrintButton />
         </div>
       </div>
       {voiding && (
-        <div className="print-hide mb-4">
+        <div className="print-hide mb-4" data-tour="op-detalle-motivo-anulacion">
           <ConfirmPanel
             title={`Anular la orden de pago ${p.number}`}
             impact="Las facturas vuelven a quedar pendientes, el dinero vuelve a su caja o banco, los cheques endosados vuelven a la cartera y los cheques propios se anulan. No se puede si un cheque propio ya fue debitado."
@@ -108,7 +108,7 @@ export default function PaymentPage({ params }: { params: Promise<{ id: string }
         </div>
       )}
       {p.status === 'PENDING_APPROVAL' && (
-        <div role="status" className="print-hide mb-4 rounded-lg border border-warning/40 bg-warning-soft p-3 text-sm">
+        <div data-tour="op-detalle-pendiente" role="status" className="print-hide mb-4 rounded-lg border border-warning/40 bg-warning-soft p-3 text-sm">
           <strong>Pendiente de aprobación.</strong> Cargada por {p.createdByName}. Todavía no salió dinero ni se entregaron cheques; al aprobarla se paga y se imputa. Debe aprobarla otra persona con permiso.
         </div>
       )}
@@ -119,7 +119,7 @@ export default function PaymentPage({ params }: { params: Promise<{ id: string }
       )}
       {p.status === 'POSTED' && p.approvedByName && <p className="print-hide mb-4 text-sm text-muted">Aprobada por {p.approvedByName}.</p>}
       {rejecting && (
-        <div className="print-hide mb-4">
+        <div className="print-hide mb-4" data-tour="op-detalle-motivo-rechazo">
           <ConfirmPanel
             title={`Rechazar la orden de pago ${p.number}`}
             impact="No se paga nada: la deuda con el proveedor sigue pendiente y los cheques de cartera elegidos quedan libres."
@@ -133,7 +133,7 @@ export default function PaymentPage({ params }: { params: Promise<{ id: string }
           />
         </div>
       )}
-      <Card className="p-6">
+      <Card className="p-6" tour="op-detalle-documento">
         <DocHeader company={p.company} title="Orden de pago" number={p.number} meta={<p className="text-muted">Fecha {fmtDate(p.date)}</p>} />
         <div className="my-4 text-sm">
           <p>Pagamos a <span className="font-medium">{p.supplier?.legalName}</span> (CUIT {p.supplier?.taxId}, {TAX_CONDITION_LABELS[p.supplier?.taxCondition ?? '']}) la suma de <span className="num font-semibold">{fmtMoney(p.total)}</span>.</p>

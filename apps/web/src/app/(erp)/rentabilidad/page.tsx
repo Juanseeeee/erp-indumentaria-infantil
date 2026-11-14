@@ -77,7 +77,7 @@ export default function ProfitabilityPage() {
         title="Rentabilidad"
         description="Margen bruto estimado: lo vendido neto de IVA menos el costo de salida de la mercadería. No descuenta gastos, comisiones ni impuestos: no es el resultado contable."
       />
-      <Card className="mb-4 p-4">
+      <Card className="mb-4 p-4" tour="rentab-fechas">
         <div className="flex flex-wrap items-end gap-4">
           <Field label="Desde" htmlFor="pr-from"><Input id="pr-from" type="date" value={from} max={to || undefined} onChange={(e) => setFrom(e.target.value)} /></Field>
           <Field label="Hasta" htmlFor="pr-to"><Input id="pr-to" type="date" value={to} min={from || undefined} onChange={(e) => setTo(e.target.value)} /></Field>
@@ -91,13 +91,13 @@ export default function ProfitabilityPage() {
         <ErrorBox error={error} />
       ) : t ? (
         <>
-          <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3" data-tour="rentab-indicadores">
             <Tile def={PROFITABILITY_METRICS.net} value={fmtMoney(t.net)} hint={`${fmtQty(t.units)} unidades`} />
             <Tile def={PROFITABILITY_METRICS.cost} value={fmtMoney(t.cost)} />
             <Tile def={PROFITABILITY_METRICS.margin} value={fmtMoney(t.margin)} hint={`${pct(t.marginPct)} sobre lo vendido`} negative={isNegative(t.margin)} />
           </div>
           {Number(t.uncostedUnits) > 0 && (
-            <div role="status" className="mb-4 flex items-start gap-2 rounded-md border border-warning/30 bg-warning-soft px-4 py-3 text-sm text-warning">
+            <div data-tour="rentab-aviso-sin-costo" role="status" className="mb-4 flex items-start gap-2 rounded-md border border-warning/30 bg-warning-soft px-4 py-3 text-sm text-warning">
               <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
               <span>
                 {fmtQty(t.uncostedUnits)} unidades vendidas no tienen costo cargado: su margen figura al 100 % y el total está <strong>sobreestimado</strong>. Revisá el costo de esos modelos en su stock inicial o su ficha técnica.
@@ -108,13 +108,13 @@ export default function ProfitabilityPage() {
       ) : null}
 
       <Card>
-        <div className="px-4 pt-3">
+        <div className="px-4 pt-3" data-tour="rentab-pestanas">
           <Tabs tabs={PROFITABILITY_DIMENSIONS.map((d) => ({ id: d, label: `Por ${PROFITABILITY_DIMENSION_LABELS[d].toLowerCase()}` }))} value={groupBy} onChange={(id) => setGroupBy(id as ProfitabilityDimension)} />
         </div>
         {data && !rows.length ? (
           <EmptyState icon={<ChartColumn className="size-8" aria-hidden />} title="Sin ventas en el período" description="No hay comprobantes de venta vigentes entre esas fechas." />
         ) : data ? (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto" data-tour="rentab-tabla">
             <table className="w-full text-sm">
               <caption className="sr-only">Margen bruto estimado por {dimLabel.toLowerCase()}</caption>
               <thead className="border-b border-border text-xs text-muted">

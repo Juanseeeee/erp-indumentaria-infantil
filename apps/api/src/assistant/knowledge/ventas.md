@@ -26,6 +26,19 @@ Si el sistema responde «No tenés permiso para esta acción (código)», hay qu
 
 ---
 
+## Cómo hacer una venta (de punta a punta)
+
+Una venta se hace en cuatro pasos, cada uno en su pantalla:
+
+1. **Pedido** (`/ventas/pedidos` → «Nuevo pedido»): cliente, lista de precios y cantidades en la grilla talle × color; «Guardar y confirmar» controla el crédito y reserva el stock. Permiso `sales.order`.
+2. **Remito** (desde el pedido, «Preparar remito»): es la salida de la mercadería; puede ser parcial. Permiso `sales.deliver`.
+3. **Factura** (desde el remito o en «Comprobantes» → nuevo): se factura uno o varios remitos del cliente y se pide el CAE. Permiso `sales.invoice`.
+4. **Cobro** (desde la factura, «Cobrar», o en «Cobros»): efectivo, transferencia o cheques, imputado a las facturas. Permiso `receivables.collect`.
+
+En el asistente, el recorrido guiado «Hacer una venta completa» lleva por las cuatro pantallas y marca dónde tocar.
+
+---
+
 ## Pedidos de venta (lista)
 
 - Ruta: `/ventas/pedidos` · Permiso: `sales.view` (botón «Nuevo pedido» requiere `sales.order`).

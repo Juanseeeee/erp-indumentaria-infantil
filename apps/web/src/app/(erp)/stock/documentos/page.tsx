@@ -60,9 +60,9 @@ export default function StockDocsPage() {
         description="Cargas iniciales, ajustes y transferencias. Nada se borra: una anulación genera movimientos de reversa."
         actions={
           <>
-            {can('inventory.opening') && <LinkButton variant="secondary" href="/stock/documentos/nuevo?tipo=OPENING">Stock inicial</LinkButton>}
-            {can('inventory.transfer') && <LinkButton variant="secondary" href="/stock/documentos/nuevo?tipo=TRANSFER">Transferencia</LinkButton>}
-            {can('inventory.adjust') && <LinkButton href="/stock/documentos/nuevo?tipo=ADJUSTMENT">Ajuste</LinkButton>}
+            {can('inventory.opening') && <LinkButton variant="secondary" href="/stock/documentos/nuevo?tipo=OPENING" tour="stockdocs-stock-inicial">Stock inicial</LinkButton>}
+            {can('inventory.transfer') && <LinkButton variant="secondary" href="/stock/documentos/nuevo?tipo=TRANSFER" tour="stockdocs-transferencia">Transferencia</LinkButton>}
+            {can('inventory.adjust') && <LinkButton href="/stock/documentos/nuevo?tipo=ADJUSTMENT" tour="stockdocs-ajuste">Ajuste</LinkButton>}
           </>
         }
       />
@@ -77,7 +77,7 @@ export default function StockDocsPage() {
         loading={isLoading}
         onRowClick={(r) => router.push(`/stock/documentos/${r.id}`)}
         toolbar={
-          <Select aria-label="Tipo" className="w-44" value={type} onChange={(e) => { setType(e.target.value); setPage(1); }}>
+          <Select data-tour="stockdocs-tipo" aria-label="Tipo" className="w-44" value={type} onChange={(e) => { setType(e.target.value); setPage(1); }}>
             <option value="">Todos los tipos</option>
             <option value="OPENING">Stock inicial</option>
             <option value="ADJUSTMENT">Ajustes</option>

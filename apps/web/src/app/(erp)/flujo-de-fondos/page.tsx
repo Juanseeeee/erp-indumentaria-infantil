@@ -52,9 +52,9 @@ export default function CashflowPage() {
   return (
     <div>
       <PageHeader title="Flujo de fondos" description="Proyección semanal: disponible de hoy en cajas, bancos y billeteras, más cheques, tarjetas a acreditar y facturas a cobrar y a pagar por vencimiento." />
-      <Card className="mb-4 p-4">
+      <Card className="mb-4 p-4" tour="ff-opciones">
         <div className="flex flex-wrap items-end gap-4">
-          <Field label="Horizonte" htmlFor="cf-weeks">
+          <Field label="Horizonte" htmlFor="cf-weeks" tour="ff-horizonte">
             <Select id="cf-weeks" value={weeks} onChange={(e) => { setWeeks(Number(e.target.value)); setSelected(null); }}>
               <option value={4}>4 semanas</option>
               <option value={8}>8 semanas</option>
@@ -62,7 +62,7 @@ export default function CashflowPage() {
               <option value={26}>26 semanas</option>
             </Select>
           </Field>
-          <label className="flex h-9 items-center gap-2 text-sm">
+          <label data-tour="ff-incluir-vencido" className="flex h-9 items-center gap-2 text-sm">
             <input type="checkbox" checked={includeOverdue} onChange={(e) => setIncludeOverdue(e.target.checked)} />
             Incluir lo vencido en la primera semana
           </label>
@@ -75,12 +75,12 @@ export default function CashflowPage() {
       ) : (
         <>
           {data.firstNegativeWeek && (
-            <div role="alert" className="mb-4 flex items-start gap-2 rounded-lg border border-danger/40 bg-danger-soft p-3 text-sm text-text">
+            <div data-tour="ff-alerta-negativo" role="alert" className="mb-4 flex items-start gap-2 rounded-lg border border-danger/40 bg-danger-soft p-3 text-sm text-text">
               <AlertTriangle className="mt-0.5 size-4 shrink-0 text-danger" aria-hidden />
               <span><strong>Saldo negativo</strong> desde la semana del {fmtDate(data.firstNegativeWeek)}. Revisá pagos a reprogramar o cobranzas a adelantar.</span>
             </div>
           )}
-          <div className="mb-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div data-tour="ff-indicadores" className="mb-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <Stat label="Disponible hoy" value={fmtMoney(data.opening)} hint="Cajas, bancos y billeteras a fecha de valor" />
             <Stat label="Saldo al final" value={fmtMoney(data.weeks.at(-1)!.balance)} tone={isNegative(data.weeks.at(-1)!.balance) ? 'danger' : undefined} hint={`Semana del ${fmtDate(data.weeks.at(-1)!.from)}`} />
             <Stat label="Saldo más bajo" value={fmtMoney(lowest!.balance)} tone={isNegative(lowest!.balance) ? 'danger' : undefined} hint={`Semana del ${fmtDate(lowest!.from)}`} />
@@ -88,19 +88,19 @@ export default function CashflowPage() {
           </div>
 
           <div className="mb-4 grid min-w-0 grid-cols-1 gap-4 xl:grid-cols-2">
-            <Card className="min-w-0 p-4">
+            <Card className="min-w-0 p-4" tour="ff-grafico-flujo">
               <h2 className="font-medium">Ingresos y egresos esperados por semana</h2>
               <Legend />
               <FlowChart weeks={data.weeks} selected={selected} onSelect={setSelected} />
             </Card>
-            <Card className="min-w-0 p-4">
+            <Card className="min-w-0 p-4" tour="ff-grafico-saldo">
               <h2 className="font-medium">Saldo proyectado al cierre de cada semana</h2>
               <p className="mb-2 text-xs text-muted">La línea punteada marca el cero.</p>
               <BalanceChart weeks={data.weeks} selected={selected} onSelect={setSelected} />
             </Card>
           </div>
 
-          <Card className="mb-4 overflow-hidden">
+          <Card className="mb-4 overflow-hidden" tour="ff-tabla">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <caption className="sr-only">Flujo de fondos por semana</caption>
@@ -121,7 +121,7 @@ export default function CashflowPage() {
                       <td className="num whitespace-nowrap px-3 py-2 text-right">{fmtMoney(w.outflow.replace('-', ''))}</td>
                       <td className={`num whitespace-nowrap px-3 py-2 text-right font-medium ${isNegative(w.balance) ? 'text-danger' : ''}`}>{fmtMoney(w.balance)}</td>
                       <td className="px-3 py-2 text-right">
-                        <button type="button" className="text-accent underline" onClick={() => setSelected(selected === i ? null : i)} aria-expanded={selected === i}>
+                        <button data-tour="ff-ver-detalle" type="button" className="text-accent underline" onClick={() => setSelected(selected === i ? null : i)} aria-expanded={selected === i}>
                           {selected === i ? 'Ocultar' : 'Ver detalle'}
                         </button>
                       </td>
@@ -133,7 +133,7 @@ export default function CashflowPage() {
           </Card>
 
           {selected != null && (
-            <Card className="p-4">
+            <Card className="p-4" tour="ff-detalle">
               <h2 className="mb-3 font-medium">Detalle de la semana del {fmtDate(data.weeks[selected]!.from)}</h2>
               {weekItems.length ? (
                 <ul className="divide-y divide-border text-sm">

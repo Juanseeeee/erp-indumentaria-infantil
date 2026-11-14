@@ -118,17 +118,18 @@ export default function SalesOrderPage({ params }: { params: Promise<{ id: strin
   return (
     <div className="max-w-6xl">
       <PageHeader
+        tour="pedido-detalle-encabezado"
         title={`Pedido ${o.number}`}
         description={`${o.customer?.legalName} · ${fmtDate(o.orderDate)}${o.promisedAt ? ` · entrega ${fmtDate(o.promisedAt)}` : ''}`}
         actions={
           <div className="flex flex-wrap gap-2">
             <Badge tone={tone}>{label}</Badge>
-            {o.status === 'DRAFT' && <Can perm="sales.order"><Button loading={confirm.isPending} onClick={() => confirm.mutate()}>Confirmar y reservar</Button></Can>}
-            {open && hasPending && <Can perm="sales.order"><Button variant="secondary" loading={reserve.isPending} onClick={() => reserve.mutate()}>Reservar pendientes</Button></Can>}
-            {open && hasPending && <Can perm="sales.deliver"><Button onClick={startDelivery}>Preparar remito</Button></Can>}
+            {o.status === 'DRAFT' && <Can perm="sales.order"><Button data-tour="pedido-detalle-confirmar" loading={confirm.isPending} onClick={() => confirm.mutate()}>Confirmar y reservar</Button></Can>}
+            {open && hasPending && <Can perm="sales.order"><Button data-tour="pedido-detalle-reservar" variant="secondary" loading={reserve.isPending} onClick={() => reserve.mutate()}>Reservar pendientes</Button></Can>}
+            {open && hasPending && <Can perm="sales.deliver"><Button data-tour="pedido-detalle-preparar-remito" onClick={startDelivery}>Preparar remito</Button></Can>}
             {(o.status === 'DRAFT' || (open && hasPending)) && (
               <Can perm="sales.order">
-                <Button variant="secondary" onClick={() => setCancelling(true)}>{hasDeliveries ? 'Cancelar pendientes' : 'Cancelar pedido'}</Button>
+                <Button data-tour="pedido-detalle-cancelar" variant="secondary" onClick={() => setCancelling(true)}>{hasDeliveries ? 'Cancelar pendientes' : 'Cancelar pedido'}</Button>
               </Can>
             )}
           </div>
@@ -136,15 +137,15 @@ export default function SalesOrderPage({ params }: { params: Promise<{ id: strin
       />
 
       {creditNeeded && (
-        <Card className="mb-4 border-warning/50 p-4">
+        <Card className="mb-4 border-warning/50 p-4" tour="pedido-detalle-credito">
           <p className="font-medium">Límite de crédito excedido</p>
           <p className="mt-1 text-sm text-muted">{creditNeeded}</p>
           {can('sales.credit.override') ? (
             <div className="mt-3 flex flex-wrap items-end gap-2">
-              <Field label="Motivo de la autorización" htmlFor="cnote" className="min-w-72 flex-1">
+              <Field label="Motivo de la autorización" htmlFor="cnote" className="min-w-72 flex-1" tour="pedido-detalle-motivo-credito">
                 <Input id="cnote" value={creditNote} onChange={(e) => setCreditNote(e.target.value)} />
               </Field>
-              <Button loading={confirm.isPending} disabled={creditNote.trim().length < 3} onClick={() => confirm.mutate()}>Autorizar y confirmar</Button>
+              <Button data-tour="pedido-detalle-autorizar" loading={confirm.isPending} disabled={creditNote.trim().length < 3} onClick={() => confirm.mutate()}>Autorizar y confirmar</Button>
             </div>
           ) : (
             <p className="mt-2 text-sm">El pedido queda en borrador hasta que Administración lo autorice.</p>
@@ -168,7 +169,7 @@ export default function SalesOrderPage({ params }: { params: Promise<{ id: strin
       )}
 
       <div className="mb-4 grid gap-4 md:grid-cols-4">
-        <Card className="p-4 text-sm md:col-span-3">
+        <Card className="p-4 text-sm md:col-span-3" tour="pedido-detalle-datos">
           <dl className="grid grid-cols-2 gap-x-6 gap-y-1 sm:grid-cols-4">
             <dt className="text-muted">Depósito</dt><dd>{o.warehouse?.name}</dd>
             <dt className="text-muted">Lista</dt><dd>{o.priceList?.name ?? '—'}</dd>
@@ -187,7 +188,7 @@ export default function SalesOrderPage({ params }: { params: Promise<{ id: strin
         </Card>
       </div>
 
-      <Card className="mb-4 overflow-x-auto">
+      <Card className="mb-4 overflow-x-auto" tour="pedido-detalle-lineas">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border bg-surface-2/60 text-xs text-muted uppercase">
@@ -200,7 +201,7 @@ export default function SalesOrderPage({ params }: { params: Promise<{ id: strin
               <th className="px-3 py-2 text-right">Pendiente</th>
               <th className="px-3 py-2 text-right">Reservado</th>
               <th className="px-3 py-2 text-right">Disponible</th>
-              {deliver && <th className="px-3 py-2 text-right">A entregar</th>}
+              {deliver && <th className="px-3 py-2 text-right" data-tour="pedido-detalle-a-entregar">A entregar</th>}
             </tr>
           </thead>
           <tbody>
@@ -241,17 +242,17 @@ export default function SalesOrderPage({ params }: { params: Promise<{ id: strin
       </Card>
 
       {deliver && (
-        <Card className="mb-4 flex flex-wrap items-end gap-3 p-4">
+        <Card className="mb-4 flex flex-wrap items-end gap-3 p-4" tour="pedido-detalle-remito">
           <Field label="Bultos" htmlFor="pk"><Input id="pk" className="w-24" inputMode="numeric" value={extra.packages} onChange={(e) => setExtra({ ...extra, packages: e.target.value.replace(/\D/g, '') })} /></Field>
           <Field label="Transporte" htmlFor="carrier" className="min-w-60 flex-1"><Input id="carrier" value={extra.carrier} onChange={(e) => setExtra({ ...extra, carrier: e.target.value })} /></Field>
-          <Button loading={createDelivery.isPending} onClick={() => createDelivery.mutate()}>Emitir remito</Button>
+          <Button data-tour="pedido-detalle-emitir-remito" loading={createDelivery.isPending} onClick={() => createDelivery.mutate()}>Emitir remito</Button>
           <Button variant="secondary" onClick={() => setDeliver(null)}>Cancelar</Button>
           <p className="w-full text-xs text-muted">Precargado con lo reservado y lo disponible. El remito descuenta el stock; la factura se emite después desde Comprobantes.</p>
         </Card>
       )}
 
       {o.deliveries.length > 0 && (
-        <Card className="p-4">
+        <Card className="p-4" tour="pedido-detalle-remitos">
           <p className="mb-2 font-medium">Remitos</p>
           <ul className="text-sm">
             {o.deliveries.map((d) => (

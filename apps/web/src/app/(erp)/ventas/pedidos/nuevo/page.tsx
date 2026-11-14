@@ -170,28 +170,28 @@ export default function NewSalesOrderPage() {
       <PageHeader title="Nuevo pedido" description="Elegí el cliente, buscá cada modelo y cargá las cantidades en la grilla (también podés pegar desde Excel)." />
       <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
         <div className="flex flex-col gap-4">
-          <Card className="grid grid-cols-1 gap-4 p-4 sm:grid-cols-3">
-            <Field label="Cliente" htmlFor="customer" className="sm:col-span-2">
+          <Card className="grid grid-cols-1 gap-4 p-4 sm:grid-cols-3" tour="pedido-nuevo-datos">
+            <Field label="Cliente" htmlFor="customer" className="sm:col-span-2" tour="pedido-nuevo-cliente">
               <Select id="customer" value={customerId} onChange={(e) => { setCustomerId(e.target.value); setPriceListId(''); setDiscount(''); setLines({}); }}>
                 <option value="">Elegí un cliente…</option>
                 {customers.data?.rows.map((c) => <option key={c.id} value={c.id}>{c.legalName}</option>)}
               </Select>
             </Field>
-            <Field label="Despachar desde" htmlFor="wh">
+            <Field label="Despachar desde" htmlFor="wh" tour="pedido-nuevo-deposito">
               <Select id="wh" value={wh} onChange={(e) => { setWarehouseId(e.target.value); setLines({}); }}>
                 {own.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
               </Select>
             </Field>
-            <Field label="Lista de precios" htmlFor="pl">
+            <Field label="Lista de precios" htmlFor="pl" tour="pedido-nuevo-lista">
               <Select id="pl" value={pl} onChange={(e) => { setPriceListId(e.target.value); setLines({}); }}>
                 <option value="">Elegí…</option>
                 {lists.data?.filter((l) => l.isActive).map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
               </Select>
             </Field>
-            <Field label="Descuento manual %" htmlFor="disc" hint={`Vacío: automático (cliente ${ctx.data ? `${ctx.data.discountPct} %` : '—'} o promoción vigente, el mejor)`}>
+            <Field tour="pedido-nuevo-descuento" label="Descuento manual %" htmlFor="disc" hint={`Vacío: automático (cliente ${ctx.data ? `${ctx.data.discountPct} %` : '—'} o promoción vigente, el mejor)`}>
               <Input id="disc" inputMode="decimal" placeholder="Automático" value={discount} onChange={(e) => setDiscount(e.target.value.replace(',', '.'))} />
             </Field>
-            <Field label="Entrega comprometida" htmlFor="promised">
+            <Field label="Entrega comprometida" htmlFor="promised" tour="pedido-nuevo-entrega">
               <Input id="promised" type="date" value={form.promisedAt} onChange={(e) => setForm({ ...form, promisedAt: e.target.value })} />
             </Field>
             <Field label="Domicilio de entrega" htmlFor="addr" className="sm:col-span-3">
@@ -200,16 +200,16 @@ export default function NewSalesOrderPage() {
           </Card>
 
           {customerId && pl && (
-            <Card className="p-4">
+            <Card className="p-4" tour="pedido-nuevo-articulos">
               <div className="mb-3 flex flex-wrap items-end gap-3">
-                <Field label="Modelo" htmlFor="product" className="min-w-64 flex-1">
+                <Field label="Modelo" htmlFor="product" className="min-w-64 flex-1" tour="pedido-nuevo-modelo">
                   <Select id="product" value={productId} onChange={(e) => setProductId(e.target.value)}>
                     <option value="">Buscá un modelo…</option>
                     {products.data?.rows.map((p) => <option key={p.id} value={p.id}>{p.code} · {p.name}</option>)}
                   </Select>
                 </Field>
                 {matrix.data && (
-                  <div className="flex items-end gap-2">
+                  <div className="flex items-end gap-2" data-tour="pedido-nuevo-curva">
                     <Field label="Curva: unidades por celda" htmlFor="curve">
                       <Input id="curve" className="w-24" inputMode="numeric" value={curve} onChange={(e) => setCurve(e.target.value.replace(/\D/g, ''))} />
                     </Field>
@@ -242,7 +242,7 @@ export default function NewSalesOrderPage() {
           )}
 
           {list.length > 0 && (
-            <Card className="overflow-x-auto">
+            <Card className="overflow-x-auto" tour="pedido-nuevo-lineas">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border bg-surface-2/60 text-xs text-muted uppercase">
@@ -282,12 +282,12 @@ export default function NewSalesOrderPage() {
               </table>
             </Card>
           )}
-          <Field label="Observaciones" htmlFor="notes"><Textarea id="notes" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></Field>
+          <Field label="Observaciones" htmlFor="notes" tour="pedido-nuevo-observaciones"><Textarea id="notes" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></Field>
         </div>
 
         <aside className="flex flex-col gap-4 lg:sticky lg:top-4 lg:self-start">
           {ctx.data && (
-            <Card className="p-4 text-sm">
+            <Card className="p-4 text-sm" tour="pedido-nuevo-cliente-panel">
               <p className="font-medium">{ctx.data.legalName}</p>
               <dl className="mt-2 grid grid-cols-2 gap-y-1">
                 <dt className="text-muted">Vendedor</dt><dd>{ctx.data.seller?.name ?? '—'}</dd>
@@ -304,7 +304,7 @@ export default function NewSalesOrderPage() {
               </dl>
             </Card>
           )}
-          <Card className="p-4 text-sm">
+          <Card className="p-4 text-sm" tour="pedido-nuevo-totales">
             <dl className="grid grid-cols-2 gap-y-1">
               <dt className="text-muted">Prendas</dt><dd className="num text-right">{list.reduce((a, l) => a + Number(l.qty), 0).toLocaleString('es-AR')}</dd>
               <dt className="text-muted">Neto</dt><dd className="num text-right">{fmtMoney(totals?.netTotal.toString() ?? '0')}</dd>
@@ -318,8 +318,8 @@ export default function NewSalesOrderPage() {
             {preview.error && <p className="mt-3 text-danger" role="alert">{(preview.error as Error).message}</p>}
             {missingPrice.length > 0 && <p className="mt-3 text-danger">Hay artículos sin precio en la lista: quitalos o pedí que carguen el precio.</p>}
             <div className="mt-4 flex flex-col gap-2">
-              <Button loading={save.isPending} disabled={!canSave} onClick={() => save.mutate(true)}>Guardar y confirmar</Button>
-              <Button variant="secondary" disabled={!canSave || save.isPending} onClick={() => save.mutate(false)}>Guardar borrador</Button>
+              <Button data-tour="pedido-nuevo-confirmar" loading={save.isPending} disabled={!canSave} onClick={() => save.mutate(true)}>Guardar y confirmar</Button>
+              <Button data-tour="pedido-nuevo-borrador" variant="secondary" disabled={!canSave || save.isPending} onClick={() => save.mutate(false)}>Guardar borrador</Button>
             </div>
           </Card>
         </aside>

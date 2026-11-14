@@ -111,18 +111,18 @@ function NewSupplierInvoice() {
     <div className="max-w-5xl">
       <PageHeader title="Cargar comprobante de proveedor" description="Elegí las recepciones que factura: se precargan cantidades y precios. Si el precio difiere de lo recibido, queda marcado." />
       <Card className="mb-4 grid grid-cols-2 gap-4 p-4 sm:grid-cols-6">
-        <Field label="Proveedor" htmlFor="sup" className="col-span-2 sm:col-span-3">
+        <Field label="Proveedor" htmlFor="sup" className="col-span-2 sm:col-span-3" tour="cp-nuevo-proveedor">
           <Select id="sup" value={supplierId} onChange={(e) => { setSupplierId(e.target.value); setLines([]); }}>
             <option value="">Elegí…</option>
             {suppliers.data?.rows.map((s) => <option key={s.id} value={s.id}>{s.legalName}</option>)}
           </Select>
         </Field>
-        <Field label="Tipo" htmlFor="dt">
+        <Field label="Tipo" htmlFor="dt" tour="cp-nuevo-tipo">
           <Select id="dt" value={head.docType} onChange={set('docType')}>
             {['FA', 'FB', 'FC', 'NCA', 'NCB', 'NCC', 'NDA', 'NDB', 'NDC'].map((t) => <option key={t}>{t}</option>)}
           </Select>
         </Field>
-        <Field label="Punto de venta" htmlFor="pv">
+        <Field label="Punto de venta" htmlFor="pv" tour="cp-nuevo-punto-venta">
           {otherPos || (head.pointOfSale !== '' && !defaults.data?.pointsOfSale.includes(Number(head.pointOfSale))) ? (
             <Input id="pv" inputMode="numeric" value={head.pointOfSale} onChange={(e) => setHead((h) => ({ ...h, pointOfSale: e.target.value.replace(/\D/g, '') }))} />
           ) : (
@@ -141,17 +141,17 @@ function NewSupplierInvoice() {
             </Select>
           )}
         </Field>
-        <Field label="Número" htmlFor="nro" hint={!touched.number && defaults.data?.nextNumber ? 'Sigue al último cargado' : undefined}>
+        <Field label="Número" htmlFor="nro" tour="cp-nuevo-numero" hint={!touched.number && defaults.data?.nextNumber ? 'Sigue al último cargado' : undefined}>
           <Input id="nro" inputMode="numeric" value={head.number} onChange={(e) => { setTouched((t) => ({ ...t, number: true })); setHead((h) => ({ ...h, number: e.target.value.replace(/\D/g, '') })); }} />
         </Field>
-        <Field label="Fecha" htmlFor="fd" className="col-span-2" hint={!touched.issueDate && lines.some((l) => l.receiptLineId) ? 'La de la recepción' : undefined}>
+        <Field label="Fecha" htmlFor="fd" className="col-span-2" tour="cp-nuevo-fecha" hint={!touched.issueDate && lines.some((l) => l.receiptLineId) ? 'La de la recepción' : undefined}>
           <Input id="fd" type="date" value={head.issueDate} onChange={(e) => { setTouched((t) => ({ ...t, issueDate: true })); set('issueDate')(e); }} />
         </Field>
-        <Field label="Vencimiento" htmlFor="vd" className="col-span-2" hint="Vacío: según condición de pago"><Input id="vd" type="date" value={head.dueDate} onChange={set('dueDate')} /></Field>
-        <Field label="Percepciones / otros ($)" htmlFor="ot" className="col-span-2"><Input id="ot" inputMode="decimal" value={head.otherTaxes} onChange={(e) => setHead((h) => ({ ...h, otherTaxes: e.target.value.replace(',', '.') }))} /></Field>
+        <Field label="Vencimiento" htmlFor="vd" className="col-span-2" tour="cp-nuevo-vencimiento" hint="Vacío: según condición de pago"><Input id="vd" type="date" value={head.dueDate} onChange={set('dueDate')} /></Field>
+        <Field label="Percepciones / otros ($)" htmlFor="ot" className="col-span-2" tour="cp-nuevo-percepciones"><Input id="ot" inputMode="decimal" value={head.otherTaxes} onChange={(e) => setHead((h) => ({ ...h, otherTaxes: e.target.value.replace(',', '.') }))} /></Field>
       </Card>
       {supplierId && (
-        <Card className="mb-4 p-4">
+        <Card className="mb-4 p-4" tour="cp-nuevo-recepciones">
           <p className="mb-2 text-sm font-medium">Recepciones pendientes de facturar</p>
           {receipts.data?.length ? (
             <div className="flex flex-wrap gap-2">
@@ -164,7 +164,7 @@ function NewSupplierInvoice() {
           )}
         </Card>
       )}
-      <Card className="mb-4 overflow-x-auto">
+      <Card className="mb-4 overflow-x-auto" tour="cp-nuevo-lineas">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b border-border bg-surface-2/60 text-xs text-muted uppercase">
@@ -192,15 +192,16 @@ function NewSupplierInvoice() {
           </tbody>
         </table>
         <div className="flex items-center justify-between border-t border-border p-3">
-          <Button size="sm" variant="secondary" onClick={() => setLines((ls) => [...ls, { receiptLineId: null, itemId: null, description: '', qty: '1', unitPrice: '', vatRate: '21' }])}>Agregar línea libre</Button>
+          <Button data-tour="cp-nuevo-linea-libre" size="sm" variant="secondary" onClick={() => setLines((ls) => [...ls, { receiptLineId: null, itemId: null, description: '', qty: '1', unitPrice: '', vatRate: '21' }])}>Agregar línea libre</Button>
           {totals && (
-            <p className="num text-sm">
+            <p data-tour="cp-nuevo-totales" className="num text-sm">
               Neto {fmtMoney(totals.netTotal.toFixed(2))} · IVA {fmtMoney(totals.vatTotal.toFixed(2))} · otros {fmtMoney(totals.otherTaxes.toFixed(2))} · <strong>Total {fmtMoney(totals.total.toFixed(2))}</strong>
             </p>
           )}
         </div>
       </Card>
       <Button
+        data-tour="cp-nuevo-registrar"
         disabled={!supplierId || !head.pointOfSale || !head.number || !lines.length}
         loading={create.isPending}
         onClick={() => create.mutate()}

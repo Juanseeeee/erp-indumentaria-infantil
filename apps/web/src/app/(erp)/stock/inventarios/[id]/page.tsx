@@ -90,13 +90,14 @@ export default function CountPage({ params }: { params: Promise<{ id: string }> 
   return (
     <div className="max-w-5xl">
       <PageHeader
+        tour="stockconteo-encabezado"
         title={`Inventario ${data.number}`}
         description={`${md?.warehouses.find((w) => w.id === data.warehouseId)?.name ?? ''} · ${counted} de ${data.lines.length} contados · ${withDiff} con diferencia`}
         actions={<Badge tone={statusTone(data.status)}>{DOC_STATUS_LABELS[data.status]}</Badge>}
       />
       {editable && (
         <Card className="mb-4 flex flex-wrap items-center gap-3 p-4">
-          <div className="relative min-w-64 flex-1">
+          <div className="relative min-w-64 flex-1" data-tour="stockconteo-escaner">
             <ScanLine className="pointer-events-none absolute top-2.5 left-2.5 size-4 text-muted" aria-hidden />
             <Input
               ref={scanRef}
@@ -109,6 +110,7 @@ export default function CountPage({ params }: { params: Promise<{ id: string }> 
             />
           </div>
           <Button
+            data-tour="stockconteo-guardar"
             variant="secondary"
             disabled={!dirty.length}
             loading={save.isPending}
@@ -117,7 +119,7 @@ export default function CountPage({ params }: { params: Promise<{ id: string }> 
             Guardar conteo ({dirty.length})
           </Button>
           {can('inventory.adjust') && (
-            <Button disabled={!!dirty.length || !counted} onClick={() => setConfirming(true)}>
+            <Button data-tour="stockconteo-confirmar" disabled={!!dirty.length || !counted} onClick={() => setConfirming(true)}>
               Confirmar inventario
             </Button>
           )}
@@ -137,12 +139,12 @@ export default function CountPage({ params }: { params: Promise<{ id: string }> 
       )}
       <Card>
         <div className="flex flex-wrap items-center gap-3 border-b border-border p-3">
-          <Input className="max-w-xs" placeholder="Filtrar por SKU o nombre…" value={filter} onChange={(e) => setFilter(e.target.value)} aria-label="Filtrar" />
-          <label className="flex items-center gap-2 text-sm">
+          <Input data-tour="stockconteo-filtro" className="max-w-xs" placeholder="Filtrar por SKU o nombre…" value={filter} onChange={(e) => setFilter(e.target.value)} aria-label="Filtrar" />
+          <label data-tour="stockconteo-solo-diferencia" className="flex items-center gap-2 text-sm">
             <input type="checkbox" checked={onlyDiff} onChange={(e) => setOnlyDiff(e.target.checked)} /> Solo con diferencia
           </label>
         </div>
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto" data-tour="stockconteo-tabla">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border bg-surface-2/60 text-xs text-muted uppercase">

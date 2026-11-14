@@ -48,7 +48,7 @@ export default function SupplierDocsPage() {
       <PageHeader
         title="Comprobantes de proveedores"
         description="Cada comprobante genera su movimiento en la cuenta corriente del proveedor. Las diferencias de precio o cantidad contra lo recibido quedan marcadas."
-        actions={<Can perm="purchasing.invoice"><LinkButton href="/compras/comprobantes/nuevo"><Plus className="size-4" /> Cargar comprobante</LinkButton></Can>}
+        actions={<Can perm="purchasing.invoice"><LinkButton href="/compras/comprobantes/nuevo" tour="cp-cargar"><Plus className="size-4" /> Cargar comprobante</LinkButton></Can>}
       />
       <DataTable
         id="supplier-docs"
